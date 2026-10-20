@@ -1,5 +1,3 @@
-"""Run MoveIt against Miranda state supplied by ADVRF, without fake hardware."""
-
 import os
 from pathlib import Path
 
@@ -32,13 +30,6 @@ def _required_file(context, argument: str) -> Path:
     return path.resolve()
 
 
-def _as_bool(context, argument: str) -> bool:
-    value = LaunchConfiguration(argument).perform(context).lower()
-    if value not in ("true", "false"):
-        raise RuntimeError(f"{argument} must be 'true' or 'false', got '{value}'")
-    return value == "true"
-
-
 def _launch_setup(context):
     description_file = _required_file(context, "robot_description_file")
     srdf_file = _required_file(context, "robot_srdf_file")
@@ -61,10 +52,6 @@ def _launch_setup(context):
             file_path=str(controllers_file), moveit_manage_controllers=False
         )
         .planning_scene_monitor(
-            publish_planning_scene=True,
-            publish_geometry_updates=True,
-            publish_state_updates=True,
-            publish_transforms_updates=True,
             publish_robot_description=True,
             publish_robot_description_semantic=True,
         )
@@ -72,17 +59,7 @@ def _launch_setup(context):
         .to_moveit_configs()
     )
 
-    joint_states_topic = LaunchConfiguration("joint_states_topic").perform(context)
-    allow_execution = _as_bool(context, "allow_trajectory_execution")
-
     return [
-        Node(
-            package="miranda_advrf_bringup",
-            executable="joint_state_relay.py",
-            name="miranda_joint_state_relay",
-            output="screen",
-            parameters=[{"input_topic": joint_states_topic}],
-        ),
         Node(
             package="tf2_ros",
             executable="static_transform_publisher",
@@ -105,14 +82,7 @@ def _launch_setup(context):
             package="moveit_ros_move_group",
             executable="move_group",
             output="screen",
-            parameters=[
-                moveit_config.to_dict(),
-                {
-                    "allow_trajectory_execution": allow_execution,
-                    "publish_robot_description": True,
-                    "publish_robot_description_semantic": True,
-                },
-            ],
+            parameters=[moveit_config.to_dict()],
         ),
         Node(
             package="rviz2",
@@ -171,19 +141,7 @@ def generate_launch_description():
                 "rviz_config",
                 default_value=_config_default("ros2/rviz/moveit.rviz"),
             ),
-            DeclareLaunchArgument(
-                "joint_states_topic",
-                default_value="/advrf/miranda/rx/joint_states",
-            ),
             DeclareLaunchArgument("use_rviz", default_value="true"),
-            DeclareLaunchArgument(
-                "allow_trajectory_execution",
-                default_value="false",
-                description=(
-                    "Enable only when FollowJointTrajectory servers matching the "
-                    "ADVRF MoveIt controller configuration are running."
-                ),
-            ),
             OpaqueFunction(function=_launch_setup),
         ]
     )

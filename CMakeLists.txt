@@ -8,14 +8,4 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
-install(
-  PROGRAMS scripts/joint_state_relay.py
-  DESTINATION lib/${PROJECT_NAME}
-)
-
-install(
-  FILES README.md
-  DESTINATION share/${PROJECT_NAME}
-)
-
 ament_package()

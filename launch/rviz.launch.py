@@ -30,7 +30,6 @@ def _required_file(context, argument: str) -> Path:
 def _launch_setup(context):
     description_file = _required_file(context, "robot_description_file")
     rviz_config = _required_file(context, "rviz_config")
-    joint_states_topic = LaunchConfiguration("joint_states_topic").perform(context)
 
     robot_description = ParameterValue(
         Command([FindExecutable(name="xacro"), " ", str(description_file)]),
@@ -39,17 +38,11 @@ def _launch_setup(context):
 
     return [
         Node(
-            package="miranda_advrf_bringup",
-            executable="joint_state_relay.py",
-            name="miranda_joint_state_relay",
-            output="screen",
-            parameters=[{"input_topic": joint_states_topic}],
-        ),
-        Node(
             package="robot_state_publisher",
             executable="robot_state_publisher",
             output="screen",
             parameters=[{"robot_description": robot_description}],
+            remappings=[("/joint_states", "/advrf/miranda/rx/joint_states")],
         ),
         Node(
             package="rviz2",
@@ -70,11 +63,6 @@ def generate_launch_description():
                 "robot_description_file",
                 default_value=_environment_default("ROBOT_DESCRIPTION"),
                 description="Miranda URDF or Xacro exported by ecat-miranda-config.",
-            ),
-            DeclareLaunchArgument(
-                "joint_states_topic",
-                default_value="/advrf/miranda/rx/joint_states",
-                description="ADVRF JointState feedback topic.",
             ),
             DeclareLaunchArgument(
                 "rviz_config",
