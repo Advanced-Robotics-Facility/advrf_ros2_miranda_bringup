@@ -1,0 +1,8 @@
+[submodule "dependencies/concert_resources"]
+	path = dependencies/concert_resources
+	url = https://github.com/ADVRHumanoids/concert_resources.git
+	branch = ros2
+[submodule "dependencies/iit-dagana-ros-pkg"]
+	path = dependencies/iit-dagana-ros-pkg
+	url = https://github.com/ADVRHumanoids/iit-dagana-ros-pkg.git
+	branch = ros2

@@ -36,6 +36,7 @@ def _launch_setup(context):
     kinematics_file = _required_file(context, "kinematics_file")
     joint_limits_file = _required_file(context, "joint_limits_file")
     controllers_file = _required_file(context, "moveit_controllers_file")
+    ros2_controllers_file = _required_file(context, "ros2_controllers_file")
     cartesian_limits_file = _required_file(context, "pilz_cartesian_limits_file")
     rviz_config = _required_file(context, "rviz_config")
 
@@ -77,6 +78,33 @@ def _launch_setup(context):
             executable="robot_state_publisher",
             output="screen",
             parameters=[moveit_config.robot_description],
+        ),
+        Node(
+            package="controller_manager",
+            executable="ros2_control_node",
+            output="screen",
+            parameters=[str(ros2_controllers_file)],
+            remappings=[
+                ("/controller_manager/robot_description", "/robot_description"),
+            ],
+        ),
+        Node(
+            package="controller_manager",
+            executable="spawner",
+            output="screen",
+            arguments=["joint_state_broadcaster"],
+        ),
+        Node(
+            package="controller_manager",
+            executable="spawner",
+            output="screen",
+            arguments=["arm_controller"],
+        ),
+        Node(
+            package="controller_manager",
+            executable="spawner",
+            output="screen",
+            arguments=["gripper_controller"],
         ),
         Node(
             package="moveit_ros_move_group",
@@ -129,6 +157,13 @@ def generate_launch_description():
                 default_value=_environment_or_config(
                     "MOVEIT_CONTROLLERS",
                     "ros2/config/moveit_controllers.yaml",
+                ),
+            ),
+            DeclareLaunchArgument(
+                "ros2_controllers_file",
+                default_value=_environment_or_config(
+                    "ROS2_CONTROLLERS",
+                    "ros2/config/ros2_controllers.yaml",
                 ),
             ),
             DeclareLaunchArgument(

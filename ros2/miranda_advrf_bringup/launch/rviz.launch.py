@@ -1,5 +1,3 @@
-"""Visualize the physical Miranda state published by ADVRF."""
-
 import os
 from pathlib import Path
 
