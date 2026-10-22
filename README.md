@@ -64,8 +64,26 @@ Start MoveIt and RViz using the selected Miranda configuration:
 ros2 launch miranda_advrf_bringup moveit.launch.py
 ```
 
-The MoveIt launch starts the standard ROS 2 control demo stack configured by
+By default, the MoveIt launch starts the standard ROS 2 control demo stack configured by
 Miranda's `miranda.ros2_control.xacro` and `ros2_controllers.yaml`: the mock
 `GenericSystem`, `joint_state_broadcaster`, `arm_controller`, and
 `gripper_controller`. It publishes the standard `/joint_states` topic and does
 not use an ADVRF-specific joint-state topic.
+
+For the real robot, start the EtherCAT master and middleware first, stop any
+standalone ADVRF motor-controller launches, then run:
+
+```bash
+ros2 launch miranda_advrf_bringup moveit.launch.py \
+  use_advrf:=true
+```
+
+This mode remaps robot-state publishing to ADVRF feedback, configures MoveIt to
+use `/advrf/miranda/advrf_motors_controller/follow_joint_trajectory`, and starts
+exactly one shared joint converter, trajectory/GoTo controller, motor-power
+service, and operator panel. It does not start mock `ros2_control`, and motors
+remain stopped until START is requested. Set `use_panel:=false` to omit the
+panel. The middleware joint-state names must match the URDF, including
+`dagana_A_claw_joint`. The namespace, joint set, motor map/profile and action
+name are resolved from `EC_CFG` and its ROS 2 configuration; launch arguments
+are optional overrides.
