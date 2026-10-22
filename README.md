@@ -22,11 +22,11 @@ advrf_ros2_miranda_bringup/
 Clone the repository into a ROS 2 workspace together with its submodules:
 
 ```bash
-cd ~/ros2_ws/src
+cd ~/ws_advrf_ros2/src
 git clone --recurse-submodules \
   https://github.com/Advanced-Robotics-Facility/advrf_ros2_miranda_bringup.git
 
-cd ~/ros2_ws
+cd ~/ws_advrf_ros2
 source /opt/ros/jazzy/setup.bash
 colcon build --packages-up-to advrf_ros2_miranda_bringup
 source install/setup.bash
@@ -46,9 +46,9 @@ Use `ecat-miranda-config` and source before launching:
 source /path/to/ecat-miranda-config/setup.sh
 ```
 
-The setup script exports `ADVRF_CONFIG_ROOT`, `ROBOT_DESCRIPTION`, `ROBOT_SRDF`,
-`ROS2_CONTROLLERS`, and `MOVEIT_CONTROLLERS`. The bringup reads those paths at
-launch time.
+The setup script exports `EC_CFG`. The bringup follows `ros2.folder` from that
+file and resolves the URDF, SRDF, MoveIt, controller, and RViz configuration at
+launch time. Individual file environment variables remain optional overrides.
 
 ## Launch
 

@@ -8,14 +8,16 @@ from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import EnvironmentVariable, LaunchConfiguration
 from launch_ros.actions import Node
-from advrf_ros2_motors_controller.launch_config import optional_config, RobotNamespace
+from advrf_ros2_motors_controller.launch_config import optional_config, RobotNamespace, ros2_folder
 from advrf_ros2_motors_controller.panel_config import load_parameters
 from moveit_configs_utils import MoveItConfigsBuilder
 
 
 def _config_default(relative_path: str) -> str:
-    root = os.environ.get("ADVRF_CONFIG_ROOT", "")
-    return str(Path(root) / relative_path) if root else ""
+    ec_cfg = os.environ.get("EC_CFG", "")
+    if not ec_cfg:
+        return ""
+    return str(ros2_folder(Path(ec_cfg).expanduser().resolve()) / relative_path)
 
 
 def _environment_or_config(name: str, relative_path: str) -> str:
@@ -257,46 +259,46 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "robot_description_file",
                 default_value=_environment_or_config(
-                    "ROBOT_DESCRIPTION", "ros2/urdf/miranda.urdf.xacro"
+                    "ROBOT_DESCRIPTION", "urdf/miranda.urdf.xacro"
                 ),
             ),
             DeclareLaunchArgument(
                 "robot_srdf_file",
                 default_value=_environment_or_config(
-                    "ROBOT_SRDF", "ros2/srdf/miranda.srdf"
+                    "ROBOT_SRDF", "srdf/miranda.srdf"
                 ),
             ),
             DeclareLaunchArgument(
                 "kinematics_file",
-                default_value=_config_default("ros2/config/kinematics.yaml"),
+                default_value=_config_default("config/kinematics.yaml"),
             ),
             DeclareLaunchArgument(
                 "joint_limits_file",
-                default_value=_config_default("ros2/config/joint_limits.yaml"),
+                default_value=_config_default("config/joint_limits.yaml"),
             ),
             DeclareLaunchArgument(
                 "moveit_controllers_file",
                 default_value=_environment_or_config(
                     "MOVEIT_CONTROLLERS",
-                    "ros2/config/moveit_controllers.yaml",
+                    "config/moveit_controllers.yaml",
                 ),
             ),
             DeclareLaunchArgument(
                 "ros2_controllers_file",
                 default_value=_environment_or_config(
                     "ROS2_CONTROLLERS",
-                    "ros2/config/ros2_controllers.yaml",
+                    "config/ros2_controllers.yaml",
                 ),
             ),
             DeclareLaunchArgument(
                 "pilz_cartesian_limits_file",
                 default_value=_config_default(
-                    "ros2/config/pilz_cartesian_limits.yaml"
+                    "config/pilz_cartesian_limits.yaml"
                 ),
             ),
             DeclareLaunchArgument(
                 "rviz_config",
-                default_value=_config_default("ros2/rviz/moveit.rviz"),
+                default_value=_config_default("rviz/moveit.rviz"),
             ),
             DeclareLaunchArgument("use_rviz", default_value="true"),
             DeclareLaunchArgument("use_panel", default_value="true"),
