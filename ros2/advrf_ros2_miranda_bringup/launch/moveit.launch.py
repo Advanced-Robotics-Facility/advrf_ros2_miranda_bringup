@@ -46,7 +46,7 @@ def _launch_setup(context):
 
     builder = (
         MoveItConfigsBuilder(
-            "miranda", package_name="miranda_advrf_bringup"
+            "miranda", package_name="advrf_ros2_miranda_bringup"
         )
         .robot_description(file_path=str(description_file))
         .robot_description_semantic(file_path=str(srdf_file))

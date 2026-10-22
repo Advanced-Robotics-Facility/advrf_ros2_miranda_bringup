@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(miranda_advrf_bringup)
+project(advrf_ros2_miranda_bringup)
 
 find_package(ament_cmake REQUIRED)
 

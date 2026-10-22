@@ -9,12 +9,12 @@ repository.
 ## Repository layout
 
 ```text
-miranda_advrf_bringup/
+advrf_ros2_miranda_bringup/
 ├── dependencies/
 │   ├── concert_resources/       # Git submodule, ROS 2 branch
 │   └── iit-dagana-ros-pkg/      # Git submodule, ROS 2 branch
 └── ros2/
-    └── miranda_advrf_bringup/   # ROS 2 bringup package
+    └── advrf_ros2_miranda_bringup/   # ROS 2 bringup package
 ```
 
 ## Clone and build
@@ -24,11 +24,11 @@ Clone the repository into a ROS 2 workspace together with its submodules:
 ```bash
 cd ~/ros2_ws/src
 git clone --recurse-submodules \
-  https://github.com/Advanced-Robotics-Facility/miranda_advrf_bringup.git
+  https://github.com/Advanced-Robotics-Facility/advrf_ros2_miranda_bringup.git
 
 cd ~/ros2_ws
 source /opt/ros/jazzy/setup.bash
-colcon build --packages-up-to miranda_advrf_bringup
+colcon build --packages-up-to advrf_ros2_miranda_bringup
 source install/setup.bash
 ```
 
@@ -55,13 +55,13 @@ launch time.
 Visualize the robot state published by ADVRF:
 
 ```bash
-ros2 launch miranda_advrf_bringup rviz.launch.py
+ros2 launch advrf_ros2_miranda_bringup rviz.launch.py
 ```
 
 Start MoveIt and RViz using the selected Miranda configuration:
 
 ```bash
-ros2 launch miranda_advrf_bringup moveit.launch.py
+ros2 launch advrf_ros2_miranda_bringup moveit.launch.py
 ```
 
 By default, the MoveIt launch starts the standard ROS 2 control demo stack configured by
@@ -74,7 +74,7 @@ For the real robot, start the EtherCAT master and middleware first, stop any
 standalone ADVRF motor-controller launches, then run:
 
 ```bash
-ros2 launch miranda_advrf_bringup moveit.launch.py \
+ros2 launch advrf_ros2_miranda_bringup moveit.launch.py \
   use_advrf:=true
 ```
 

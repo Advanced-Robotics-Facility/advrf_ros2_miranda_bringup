@@ -53,7 +53,7 @@ def _launch_setup(context):
 
 
 def generate_launch_description():
-    package_share = Path(get_package_share_directory("miranda_advrf_bringup"))
+    package_share = Path(get_package_share_directory("advrf_ros2_miranda_bringup"))
 
     return LaunchDescription(
         [
