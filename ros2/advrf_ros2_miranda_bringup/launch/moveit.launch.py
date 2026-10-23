@@ -8,16 +8,14 @@ from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import EnvironmentVariable, LaunchConfiguration
 from launch_ros.actions import Node
-from advrf_ros2_motors_controller.launch_config import optional_config, RobotNamespace, ros2_folder
+from advrf_ros2_motors_controller.launch_config import optional_config, RobotNamespace
 from advrf_ros2_motors_controller.panel_config import load_parameters
 from moveit_configs_utils import MoveItConfigsBuilder
 
 
 def _config_default(relative_path: str) -> str:
-    ec_cfg = os.environ.get("EC_CFG", "")
-    if not ec_cfg:
-        return ""
-    return str(ros2_folder(Path(ec_cfg).expanduser().resolve()) / relative_path)
+    root = os.environ.get("ADVRF_CONFIG_ROOT", "")
+    return str(Path(root) / relative_path) if root else ""
 
 
 def _environment_or_config(name: str, relative_path: str) -> str:
@@ -35,16 +33,13 @@ def _required_file(context, argument: str) -> Path:
         )
     return path.resolve()
 
-
-def _launch_setup(context):
-    use_advrf = LaunchConfiguration("use_advrf").perform(context).lower() == "true"
+def _build_moveit_config(context):
     description_file = _required_file(context, "robot_description_file")
     srdf_file = _required_file(context, "robot_srdf_file")
     kinematics_file = _required_file(context, "kinematics_file")
     joint_limits_file = _required_file(context, "joint_limits_file")
     controllers_file = _required_file(context, "moveit_controllers_file")
     cartesian_limits_file = _required_file(context, "pilz_cartesian_limits_file")
-    rviz_config = _required_file(context, "rviz_config")
 
     builder = (
         MoveItConfigsBuilder(
@@ -64,7 +59,46 @@ def _launch_setup(context):
             file_path=str(controllers_file), moveit_manage_controllers=False
         )
     )
-    moveit_config = builder.to_moveit_configs()
+    return builder.to_moveit_configs(), joint_limits_file
+
+def _trajectory_execution(namespace, joints, trajectory_parameters):
+    action_name = trajectory_parameters.get(
+        "action_name", "advrf_motors_controller/follow_joint_trajectory"
+    )
+    if not isinstance(action_name, str) or "/" not in action_name.strip("/"):
+        raise RuntimeError(
+            "trajectory action_name must contain a controller and action namespace"
+        )
+    if action_name.startswith("/"):
+        full_action_name = action_name
+    else:
+        full_action_name = f"{namespace}/{action_name}"
+
+    controller_name, action_namespace = full_action_name.rsplit("/", 1)
+    return {
+        "moveit_manage_controllers": False,
+        "moveit_controller_manager": (
+            "moveit_simple_controller_manager/MoveItSimpleControllerManager"
+        ),
+        "trajectory_execution": {
+            "allowed_execution_duration_scaling": 1.2,
+            "allowed_goal_duration_margin": 0.5,
+            "allowed_start_tolerance": 0.01,
+            "execution_duration_monitoring": True,
+        },
+        "moveit_simple_controller_manager": {
+            "controller_names": [controller_name],
+            controller_name: {
+                "type": "FollowJointTrajectory",
+                "action_ns": action_namespace,
+                "default": True,
+                "joints": joints,
+            },
+        },
+    }
+
+def _launch_setup(context):
+    moveit_config, joint_limits_file = _build_moveit_config(context)
 
     namespace = LaunchConfiguration("advrf_namespace").perform(context)
     namespace = "/" + namespace.strip("/") if namespace.strip("/") else ""
@@ -73,54 +107,25 @@ def _launch_setup(context):
         str(joint_limits_file),
         "trajectory_config",
     )
-    if use_advrf:
-        joint_parameters = load_parameters(str(joint_limits_file), namespace)
-        joints = joint_parameters.get("joints", [])
-        if not joints:
-            raise RuntimeError(f"No controlled joints in {joint_limits_file}")
 
-        trajectory_parameters = (
-            load_parameters(trajectory_config, namespace) if trajectory_config else {}
-        )
-        action_name = trajectory_parameters.get(
-            "action_name", "advrf_motors_controller/follow_joint_trajectory"
-        )
-        if not isinstance(action_name, str) or "/" not in action_name.strip("/"):
-            raise RuntimeError(
-                "trajectory action_name must contain a controller and action namespace"
-            )
-        full_action_name = (
-            action_name
-            if action_name.startswith("/")
-            else f"{namespace}/{action_name}" if namespace else f"/{action_name}"
-        )
-        controller_name, action_namespace = full_action_name.rsplit("/", 1)
-        moveit_config.trajectory_execution = {
-            "moveit_manage_controllers": False,
-            "moveit_controller_manager": (
-                "moveit_simple_controller_manager/MoveItSimpleControllerManager"
-            ),
-            "trajectory_execution": {
-                "allowed_execution_duration_scaling": 1.2,
-                "allowed_goal_duration_margin": 0.5,
-                "allowed_start_tolerance": 0.01,
-                "execution_duration_monitoring": True,
-            },
-            "moveit_simple_controller_manager": {
-                "controller_names": [controller_name],
-                controller_name: {
-                    "type": "FollowJointTrajectory",
-                    "action_ns": action_namespace,
-                    "default": True,
-                    "joints": joints,
-                },
-            },
-        }
-    feedback_remappings = (
-        [("/joint_states", f"{namespace}/rx/joint_states")]
-        if use_advrf
-        else []
+    joint_parameters = load_parameters(str(joint_limits_file), namespace)
+    joints = joint_parameters.get("joints", [])
+    if not joints:
+        raise RuntimeError(f"No controlled joints in {joint_limits_file}")
+
+    trajectory_parameters = (
+        load_parameters(trajectory_config, namespace) if trajectory_config else {}
     )
+
+    moveit_config.trajectory_execution = _trajectory_execution(
+        namespace, joints, trajectory_parameters
+    )
+
+    feedback_remappings = [("/joint_states", f"{namespace}/rx/joint_states")]
+
+    rviz_config = ""
+    if IfCondition(LaunchConfiguration("use_rviz")).evaluate(context):
+        rviz_config = str(_required_file(context, "rviz_config"))
 
     actions = [
         Node(
@@ -165,39 +170,6 @@ def _launch_setup(context):
             condition=IfCondition(LaunchConfiguration("use_rviz")),
         ),
     ]
-
-    if not use_advrf:
-        ros2_controllers_file = _required_file(context, "ros2_controllers_file")
-        actions[2:2] = [
-            Node(
-                package="controller_manager",
-                executable="ros2_control_node",
-                output="screen",
-                parameters=[str(ros2_controllers_file)],
-                remappings=[
-                    ("/controller_manager/robot_description", "/robot_description"),
-                ],
-            ),
-            Node(
-                package="controller_manager",
-                executable="spawner",
-                output="screen",
-                arguments=["joint_state_broadcaster"],
-            ),
-            Node(
-                package="controller_manager",
-                executable="spawner",
-                output="screen",
-                arguments=["arm_controller"],
-            ),
-            Node(
-                package="controller_manager",
-                executable="spawner",
-                output="screen",
-                arguments=["gripper_controller"],
-            ),
-        ]
-        return actions
 
     launch_dir = Path(
         get_package_share_directory("advrf_ros2_motors_controller")
@@ -259,54 +231,42 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "robot_description_file",
                 default_value=_environment_or_config(
-                    "ROBOT_DESCRIPTION", "urdf/miranda.urdf.xacro"
+                    "ROBOT_DESCRIPTION", "ros2/urdf/miranda.urdf.xacro"
                 ),
             ),
             DeclareLaunchArgument(
                 "robot_srdf_file",
                 default_value=_environment_or_config(
-                    "ROBOT_SRDF", "srdf/miranda.srdf"
+                    "ROBOT_SRDF", "ros2/srdf/miranda.srdf"
                 ),
             ),
             DeclareLaunchArgument(
                 "kinematics_file",
-                default_value=_config_default("config/kinematics.yaml"),
+                default_value=_config_default("ros2/config/kinematics.yaml"),
             ),
             DeclareLaunchArgument(
                 "joint_limits_file",
-                default_value=_config_default("config/joint_limits.yaml"),
+                default_value=_config_default("ros2/config/joint_limits.yaml"),
             ),
             DeclareLaunchArgument(
                 "moveit_controllers_file",
                 default_value=_environment_or_config(
                     "MOVEIT_CONTROLLERS",
-                    "config/moveit_controllers.yaml",
-                ),
-            ),
-            DeclareLaunchArgument(
-                "ros2_controllers_file",
-                default_value=_environment_or_config(
-                    "ROS2_CONTROLLERS",
-                    "config/ros2_controllers.yaml",
+                    "ros2/config/moveit_controllers.yaml",
                 ),
             ),
             DeclareLaunchArgument(
                 "pilz_cartesian_limits_file",
                 default_value=_config_default(
-                    "config/pilz_cartesian_limits.yaml"
+                    "ros2/config/pilz_cartesian_limits.yaml"
                 ),
             ),
             DeclareLaunchArgument(
                 "rviz_config",
-                default_value=_config_default("rviz/moveit.rviz"),
+                default_value=_config_default("ros2/rviz/moveit.rviz"),
             ),
             DeclareLaunchArgument("use_rviz", default_value="true"),
             DeclareLaunchArgument("use_panel", default_value="true"),
-            DeclareLaunchArgument(
-                "use_advrf",
-                default_value="false",
-                description="Use real ADVRF feedback and motor controllers instead of mock ros2_control",
-            ),
             DeclareLaunchArgument(
                 "advrf_namespace",
                 default_value=RobotNamespace(),
