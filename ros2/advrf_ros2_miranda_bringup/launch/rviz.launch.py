@@ -1,4 +1,5 @@
 import os
+from advrf_ros2_motors_controller.launch_config import RobotNamespace, resolve_ecat_namespace
 from pathlib import Path
 
 from ament_index_python.packages import get_package_share_directory
@@ -34,13 +35,16 @@ def _launch_setup(context):
         value_type=str,
     )
 
+    transport_namespace = resolve_ecat_namespace(
+        LaunchConfiguration("ecat_namespace").perform(context),
+        os.environ.get("EC_CFG", ""), LaunchConfiguration("advrf_namespace").perform(context))
     return [
         Node(
             package="robot_state_publisher",
             executable="robot_state_publisher",
             output="screen",
             parameters=[{"robot_description": robot_description}],
-            remappings=[("/joint_states", "/advrf/miranda/rx/joint_states")],
+            remappings=[("/joint_states", transport_namespace.rstrip("/") + "/rx/joint_states")],
         ),
         Node(
             package="rviz2",
@@ -57,6 +61,8 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
+            DeclareLaunchArgument("advrf_namespace", default_value=RobotNamespace("/advrf/miranda")),
+            DeclareLaunchArgument("ecat_namespace", default_value=""),
             DeclareLaunchArgument(
                 "robot_description_file",
                 default_value=_environment_default("ROBOT_DESCRIPTION"),

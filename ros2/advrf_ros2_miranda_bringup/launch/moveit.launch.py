@@ -8,7 +8,7 @@ from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import EnvironmentVariable, LaunchConfiguration
 from launch_ros.actions import Node
-from advrf_ros2_motors_controller.launch_config import optional_config, RobotNamespace, ros2_folder
+from advrf_ros2_motors_controller.launch_config import optional_config, RobotNamespace, ros2_folder, resolve_ecat_namespace
 from advrf_ros2_motors_controller.panel_config import load_parameters
 from moveit_configs_utils import MoveItConfigsBuilder
 
@@ -116,8 +116,11 @@ def _launch_setup(context):
                 },
             },
         }
+    transport_namespace = resolve_ecat_namespace(
+        LaunchConfiguration("ecat_namespace").perform(context),
+        LaunchConfiguration("ec_cfg").perform(context), namespace)
     feedback_remappings = (
-        [("/joint_states", f"{namespace}/rx/joint_states")]
+        [("/joint_states", transport_namespace.rstrip("/") + "/rx/joint_states")]
         if use_advrf
         else []
     )
@@ -206,6 +209,7 @@ def _launch_setup(context):
         "ec_cfg": LaunchConfiguration("ec_cfg").perform(context),
         "ros2_cfg": LaunchConfiguration("ros2_cfg").perform(context),
         "namespace": namespace or "/",
+        "ecat_namespace": transport_namespace,
         "joint_limits": str(joint_limits_file),
         "robot_id_map": LaunchConfiguration("robot_id_map").perform(context),
         "control_mode": LaunchConfiguration("control_mode").perform(context),
@@ -244,6 +248,7 @@ def _launch_setup(context):
                     "ec_cfg": shared["ec_cfg"],
                     "ros2_cfg": shared["ros2_cfg"],
                     "namespace": shared["namespace"],
+                    "ecat_namespace": shared["ecat_namespace"],
                     "joint_limits": shared["joint_limits"],
                 },
                 IfCondition(LaunchConfiguration("use_panel")),
@@ -256,6 +261,7 @@ def _launch_setup(context):
 def generate_launch_description():
     return LaunchDescription(
         [
+            DeclareLaunchArgument("ecat_namespace", default_value=""),
             DeclareLaunchArgument(
                 "robot_description_file",
                 default_value=_environment_or_config(
