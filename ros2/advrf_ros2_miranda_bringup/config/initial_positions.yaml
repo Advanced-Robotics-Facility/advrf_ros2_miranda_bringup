@@ -1,0 +1,10 @@
+# Default initial positions for miranda's ros2_control fake system
+
+initial_positions:
+  dagana_A_claw_joint: 0
+  pitch_1: 0
+  pitch_2: 0
+  pitch_3: 0
+  yaw_1: 0
+  yaw_2: 0
+  yaw_3: 0

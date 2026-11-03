@@ -1,4 +1,6 @@
 import os
+import tempfile
+import yaml
 from pathlib import Path
 
 from ament_index_python.packages import get_package_share_directory
@@ -38,10 +40,66 @@ def _required_file(context, argument: str) -> Path:
 
 def _launch_setup(context):
     use_advrf = LaunchConfiguration("use_advrf").perform(context).lower() == "true"
+    config_dir = LaunchConfiguration("config_dir").perform(context)
+    robot = None
+    planning_robot = None
+    if config_dir:
+        root = Path(config_dir).expanduser().resolve(strict=True)
+        defaults = {
+            'robot_description_file': root / 'urdf/miranda.urdf.xacro',
+            'robot_srdf_file': root / 'srdf/miranda.srdf',
+            'kinematics_file': root / 'config/kinematics.yaml',
+            'joint_limits_file': root / 'config/joint_limits.yaml',
+            'moveit_controllers_file': root / ('config/moveit_controllers.yaml' if use_advrf
+                                               else 'config/moveit_mock_controllers.yaml'),
+            'ros2_controllers_file': root / 'config/ros2_controllers.yaml',
+            'pilz_cartesian_limits_file': root / 'config/pilz_cartesian_limits.yaml',
+            'rviz_config': root / 'rviz/moveit.rviz',
+        }
+        for name, path in defaults.items():
+            if not LaunchConfiguration(name).perform(context) or (name == 'robot_description_file' and LaunchConfiguration(name).perform(context) == 'auto'):
+                context.launch_configurations[name] = str(path)
+        if (root / 'config/robot_config.yaml').is_file():
+            if LaunchConfiguration('joint_limits_file').perform(context) != str(root / 'config/joint_limits.yaml'):
+                raise ValueError('With robot_config.yaml, edit central motor limits instead of joint_limits_file')
+            from advrf_ros2_motors_controller.robot_config import load_robot
+            planning_robot = load_robot(config_dir,
+                LaunchConfiguration('advrf_namespace').perform(context),
+                LaunchConfiguration('robot_description_file').perform(context),
+                LaunchConfiguration('control_mode').perform(context))
+            if use_advrf:
+                robot = planning_robot
+                if Path(LaunchConfiguration('moveit_controllers_file').perform(context)).resolve() != root / 'config/moveit_controllers.yaml':
+                    raise ValueError('With config_dir, select controllers in config/moveit_controllers.yaml')
+        elif use_advrf:
+            from advrf_ros2_motors_controller.robot_config import load_robot, joint_limits
+            robot = load_robot(config_dir,
+                LaunchConfiguration('advrf_namespace').perform(context),
+                LaunchConfiguration('robot_description_file').perform(context),
+                LaunchConfiguration('control_mode').perform(context))
+            limits = joint_limits(LaunchConfiguration('joint_limits_file').perform(context),
+                                  robot['limits']['joints'], robot['description'])
+            robot['limits'] = limits
+            for values in robot['nodes'].values():
+                values.update(limits)
+    else:
+        legacy = {
+            'robot_description_file': ('ROBOT_DESCRIPTION', 'urdf/miranda.urdf.xacro'),
+            'robot_srdf_file': ('ROBOT_SRDF', 'srdf/miranda.srdf'),
+            'kinematics_file': ('', 'config/kinematics.yaml'),
+            'joint_limits_file': ('', 'config/joint_limits.yaml'),
+            'moveit_controllers_file': ('MOVEIT_CONTROLLERS', 'config/moveit_controllers.yaml'),
+            'ros2_controllers_file': ('ROS2_CONTROLLERS', 'config/ros2_controllers.yaml'),
+            'pilz_cartesian_limits_file': ('', 'config/pilz_cartesian_limits.yaml'),
+            'rviz_config': ('', 'rviz/moveit.rviz'),
+        }
+        for name, (env, relative) in legacy.items():
+            if not LaunchConfiguration(name).perform(context):
+                context.launch_configurations[name] = _environment_or_config(env, relative)
     description_file = _required_file(context, "robot_description_file")
     srdf_file = _required_file(context, "robot_srdf_file")
     kinematics_file = _required_file(context, "kinematics_file")
-    joint_limits_file = _required_file(context, "joint_limits_file")
+    joint_limits_file = None if planning_robot else _required_file(context, "joint_limits_file")
     controllers_file = _required_file(context, "moveit_controllers_file")
     cartesian_limits_file = _required_file(context, "pilz_cartesian_limits_file")
     rviz_config = _required_file(context, "rviz_config")
@@ -53,7 +111,6 @@ def _launch_setup(context):
         .robot_description(file_path=str(description_file))
         .robot_description_semantic(file_path=str(srdf_file))
         .robot_description_kinematics(file_path=str(kinematics_file))
-        .joint_limits(file_path=str(joint_limits_file))
         .planning_pipelines()
         .planning_scene_monitor(
             publish_robot_description=True,
@@ -64,17 +121,26 @@ def _launch_setup(context):
             file_path=str(controllers_file), moveit_manage_controllers=False
         )
     )
+    if planning_robot:
+        # MoveItConfigsBuilder reads its standard YAML once; this temporary
+        # adapter is derived from the central definition and never edited.
+        with tempfile.TemporaryDirectory(prefix='advrf-moveit-') as directory:
+            path = Path(directory) / 'joint_limits.yaml'
+            path.write_text(yaml.safe_dump(planning_robot['moveit_limits']))
+            builder.joint_limits(file_path=str(path))
+    else:
+        builder.joint_limits(file_path=str(joint_limits_file))
     moveit_config = builder.to_moveit_configs()
 
     namespace = LaunchConfiguration("advrf_namespace").perform(context)
     namespace = "/" + namespace.strip("/") if namespace.strip("/") else ""
-    trajectory_config = optional_config(
+    trajectory_config = None if planning_robot else optional_config(
         LaunchConfiguration("trajectory_config").perform(context),
         str(joint_limits_file),
         "trajectory_config",
     )
     if use_advrf:
-        joint_parameters = load_parameters(str(joint_limits_file), namespace)
+        joint_parameters = robot['limits'] if robot else load_parameters(str(joint_limits_file), namespace)
         joints = joint_parameters.get("joints", [])
         if not joints:
             raise RuntimeError(f"No controlled joints in {joint_limits_file}")
@@ -82,7 +148,7 @@ def _launch_setup(context):
         trajectory_parameters = (
             load_parameters(trajectory_config, namespace) if trajectory_config else {}
         )
-        action_name = trajectory_parameters.get(
+        action_name = robot['action_name'] if robot else trajectory_parameters.get(
             "action_name", "advrf_motors_controller/follow_joint_trajectory"
         )
         if not isinstance(action_name, str) or "/" not in action_name.strip("/"):
@@ -116,6 +182,8 @@ def _launch_setup(context):
                 },
             },
         }
+    if robot and not LaunchConfiguration('ecat_namespace').perform(context):
+        context.launch_configurations['ecat_namespace'] = namespace.rstrip('/') + '/ecat'
     transport_namespace = resolve_ecat_namespace(
         LaunchConfiguration("ecat_namespace").perform(context),
         LaunchConfiguration("ec_cfg").perform(context), namespace)
@@ -200,7 +268,21 @@ def _launch_setup(context):
                 arguments=["gripper_controller"],
             ),
         ]
+        if planning_robot:
+            actions.append(Node(package='advrf_ros2_motors_controller', executable='robot_config_node',
+                namespace=namespace, output='screen', parameters=[{
+                    **planning_robot['configuration_parameters'],
+                    'configuration_file': planning_robot['configuration_file'],
+                    'robot_description': planning_robot['description'],
+                }]))
         return actions
+
+    if robot:
+        from advrf_ros2_motors_controller.robot_launch import stack_nodes
+        return actions + stack_nodes(robot, namespace, transport_namespace,
+            LaunchConfiguration('use_panel').perform(context).lower() == 'true',
+            LaunchConfiguration('start_bridge').perform(context).lower() == 'true',
+            LaunchConfiguration('use_joy').perform(context).lower() == 'true')
 
     launch_dir = Path(
         get_package_share_directory("advrf_ros2_motors_controller")
@@ -212,7 +294,7 @@ def _launch_setup(context):
         "ecat_namespace": transport_namespace,
         "joint_limits": str(joint_limits_file),
         "robot_id_map": LaunchConfiguration("robot_id_map").perform(context),
-        "control_mode": LaunchConfiguration("control_mode").perform(context),
+        "control_mode": LaunchConfiguration("control_mode").perform(context) or "position",
         "motor_profile": LaunchConfiguration("motor_profile").perform(context),
         "motor_profiles_dir": LaunchConfiguration("motor_profiles_dir").perform(context),
     }
@@ -261,26 +343,25 @@ def _launch_setup(context):
 def generate_launch_description():
     return LaunchDescription(
         [
+            DeclareLaunchArgument("config_dir", default_value=get_package_share_directory("advrf_ros2_miranda_bringup")),
+            DeclareLaunchArgument("start_bridge", default_value="false"),
+            DeclareLaunchArgument("use_joy", default_value="false"),
             DeclareLaunchArgument("ecat_namespace", default_value=""),
             DeclareLaunchArgument(
                 "robot_description_file",
-                default_value=_environment_or_config(
-                    "ROBOT_DESCRIPTION", "urdf/miranda.urdf.xacro"
-                ),
+                default_value="",
             ),
             DeclareLaunchArgument(
                 "robot_srdf_file",
-                default_value=_environment_or_config(
-                    "ROBOT_SRDF", "srdf/miranda.srdf"
-                ),
+                default_value="",
             ),
             DeclareLaunchArgument(
                 "kinematics_file",
-                default_value=_config_default("config/kinematics.yaml"),
+                default_value="",
             ),
             DeclareLaunchArgument(
                 "joint_limits_file",
-                default_value=_config_default("config/joint_limits.yaml"),
+                default_value="",
             ),
             DeclareLaunchArgument(
                 "moveit_controllers_file",
@@ -298,13 +379,11 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "pilz_cartesian_limits_file",
-                default_value=_config_default(
-                    "config/pilz_cartesian_limits.yaml"
-                ),
+                default_value="",
             ),
             DeclareLaunchArgument(
                 "rviz_config",
-                default_value=_config_default("rviz/moveit.rviz"),
+                default_value="",
             ),
             DeclareLaunchArgument("use_rviz", default_value="true"),
             DeclareLaunchArgument("use_panel", default_value="true"),
@@ -315,8 +394,8 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "advrf_namespace",
-                default_value=RobotNamespace(),
-                description="Defaults to EC_CFG ros2.namespace",
+                default_value="/advrf/miranda",
+                description="High-level ROS namespace",
             ),
             DeclareLaunchArgument(
                 "ec_cfg",
@@ -329,8 +408,8 @@ def generate_launch_description():
             DeclareLaunchArgument("robot_id_map", default_value=""),
             DeclareLaunchArgument(
                 "control_mode",
-                default_value="position",
-                choices=["position", "impedance", "velocity", "torque", "current"],
+                default_value="",
+                choices=["", "position", "impedance", "velocity", "torque", "current"],
             ),
             DeclareLaunchArgument("motor_profile", default_value=""),
             DeclareLaunchArgument("motor_profiles_dir", default_value=""),

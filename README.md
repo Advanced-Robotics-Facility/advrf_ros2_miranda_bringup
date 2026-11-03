@@ -1,89 +1,40 @@
-# Miranda ADVRF bringup
+# Miranda ADVRF ROS 2 bringup
 
-This repository collects the ROS 2 bringup package and its mesh dependencies for
-Miranda. Robot-specific EtherCAT, URDF, SRDF, MoveIt, controller, and RViz
-configuration remains in the separate
-[`ecat-miranda-config`](https://github.com/Advanced-Robotics-Facility/ecat-miranda-config)
-repository.
-
-## Repository layout
-
-```text
-advrf_ros2_miranda_bringup/
-├── dependencies/
-│   ├── concert_resources/       # Git submodule, ROS 2 branch
-│   └── iit-dagana-ros-pkg/      # Git submodule, ROS 2 branch
-└── ros2/
-    └── advrf_ros2_miranda_bringup/   # ROS 2 bringup package
-```
-
-## Clone and build
-
-Clone the repository into a ROS 2 workspace together with its submodules:
-
-```bash
-cd ~/ws_advrf_ros2/src
-git clone --recurse-submodules \
-  https://github.com/Advanced-Robotics-Facility/advrf_ros2_miranda_bringup.git
-
-cd ~/ws_advrf_ros2
-source /opt/ros/jazzy/setup.bash
-colcon build --packages-up-to advrf_ros2_miranda_bringup
-source install/setup.bash
-```
-
-For an existing checkout, initialize or update the dependencies with:
+This repository owns Miranda's ROS configuration, robot model, MoveIt setup and
+launch files. The native ROS package is in `ros2/advrf_ros2_miranda_bringup`;
+mesh dependency submodules remain under `dependencies/`.
 
 ```bash
 git submodule update --init --recursive
+source /opt/ros/jazzy/setup.bash
+colcon build --packages-up-to advrf_ros2_miranda_bringup
+source install/setup.bash
+
+# Controllers and debug panel
+ros2 launch advrf_ros2_miranda_bringup debug.launch.py
+
+# Add joystick
+ros2 launch advrf_ros2_miranda_bringup debug.launch.py use_joy:=true
+
+# MoveIt with real ADVRF controls
+ros2 launch advrf_ros2_miranda_bringup miranda.launch.py use_moveit:=true use_rviz:=true
+
+# MoveIt with mock ros2_control
+ros2 launch advrf_ros2_miranda_bringup miranda.launch.py \
+  use_moveit:=true use_advrf:=false use_rviz:=true
 ```
 
-## Select the robot configuration
+The installed package share contains `config/`, `urdf/`, `srdf/`, `rviz/` and
+`launch/`. Configuration is selected through ROS package discovery, with an
+optional `config_dir` override. No EC_CFG discovery is needed for ROS settings.
+See the [package README](ros2/advrf_ros2_miranda_bringup/README.md) for file roles
+and launch options.
 
-Use `ecat-miranda-config` and source before launching:
+The separate ecat-miranda-config repository retains EtherCAT master/client
+configuration, device ID maps, client motor profiles and firmware. Its profile
+helpers locate this installed ROS package. Starting the optional native bridge
+still requires the client environment. The native bridge lacks replCmd, so the
+motor-power services require a compatible backend.
 
-```bash
-source /path/to/ecat-miranda-config/setup.sh
-```
-
-The setup script exports `EC_CFG`. The bringup follows `ros2.folder` from that
-file and resolves the URDF, SRDF, MoveIt, controller, and RViz configuration at
-launch time. Individual file environment variables remain optional overrides.
-
-## Launch
-
-Visualize the robot state published by ADVRF:
-
-```bash
-ros2 launch advrf_ros2_miranda_bringup rviz.launch.py
-```
-
-Start MoveIt and RViz using the selected Miranda configuration:
-
-```bash
-ros2 launch advrf_ros2_miranda_bringup moveit.launch.py
-```
-
-By default, the MoveIt launch starts the standard ROS 2 control demo stack configured by
-Miranda's `miranda.ros2_control.xacro` and `ros2_controllers.yaml`: the mock
-`GenericSystem`, `joint_state_broadcaster`, `arm_controller`, and
-`gripper_controller`. It publishes the standard `/joint_states` topic and does
-not use an ADVRF-specific joint-state topic.
-
-For the real robot, start the EtherCAT master and middleware first, stop any
-standalone ADVRF motor-controller launches, then run:
-
-```bash
-ros2 launch advrf_ros2_miranda_bringup moveit.launch.py \
-  use_advrf:=true
-```
-
-This mode remaps robot-state publishing to ADVRF feedback, configures MoveIt to
-use `/advrf/miranda/advrf_motors_controller/follow_joint_trajectory`, and starts
-exactly one shared joint converter, trajectory/GoTo controller, motor-power
-service, and operator panel. It does not start mock `ros2_control`, and motors
-remain stopped until START is requested. Set `use_panel:=false` to omit the
-panel. The middleware joint-state names must match the URDF, including
-`dagana_A_claw_joint`. The namespace, joint set, motor map/profile and action
-name are resolved from `EC_CFG` and its ROS 2 configuration; launch arguments
-are optional overrides.
+Bench has a separate `advrf_ros2_bench_bringup` package with its own configuration
+and `debug.launch.py` / `bench.launch.py`; it does not require a URDF or MoveIt.

@@ -3,15 +3,19 @@
 <package format="3">
   <name>advrf_ros2_miranda_bringup</name>
   <version>0.1.0</version>
-  <description>RViz and MoveIt bringup for Miranda using the active ADVRF robot configuration.</description>
+  <description>RViz and MoveIt bringup for Miranda with packaged ROS configuration.</description>
 
   <maintainer email="manuel.delucchi@iit.it">Manuel Delucchi</maintainer>
-  <license>BSD-3-Clause</license>
+  <license>TODO</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <exec_depend>ament_index_python</exec_depend>
   <exec_depend>advrf_ros2_motors_controller</exec_depend>
+  <exec_depend>advrf_ros2_io</exec_depend>
+  <exec_depend>advrf_ros2_ecat</exec_depend>
+  <exec_depend>joy</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
   <exec_depend>concert_resources</exec_depend>
   <exec_depend>controller_manager</exec_depend>
   <exec_depend>dagana_urdf</exec_depend>

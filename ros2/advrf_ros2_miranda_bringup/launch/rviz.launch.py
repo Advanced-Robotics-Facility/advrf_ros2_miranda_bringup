@@ -36,8 +36,8 @@ def _launch_setup(context):
     )
 
     transport_namespace = resolve_ecat_namespace(
-        LaunchConfiguration("ecat_namespace").perform(context),
-        os.environ.get("EC_CFG", ""), LaunchConfiguration("advrf_namespace").perform(context))
+        LaunchConfiguration("ecat_namespace").perform(context) or LaunchConfiguration("advrf_namespace").perform(context).rstrip("/") + "/ecat",
+        "", LaunchConfiguration("advrf_namespace").perform(context))
     return [
         Node(
             package="robot_state_publisher",
@@ -61,12 +61,12 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
-            DeclareLaunchArgument("advrf_namespace", default_value=RobotNamespace("/advrf/miranda")),
+            DeclareLaunchArgument("advrf_namespace", default_value="/advrf/miranda"),
             DeclareLaunchArgument("ecat_namespace", default_value=""),
             DeclareLaunchArgument(
                 "robot_description_file",
-                default_value=_environment_default("ROBOT_DESCRIPTION"),
-                description="Miranda URDF or Xacro exported by ecat-miranda-config.",
+                default_value=str(package_share / "urdf" / "miranda.urdf.xacro"),
+                description="Miranda URDF or Xacro.",
             ),
             DeclareLaunchArgument(
                 "rviz_config",
