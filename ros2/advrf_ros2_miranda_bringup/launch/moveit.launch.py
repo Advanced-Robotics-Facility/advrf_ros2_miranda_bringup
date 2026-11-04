@@ -47,7 +47,8 @@ def _launch_setup(context):
         LaunchConfiguration('robot_description_file').perform(context),
         LaunchConfiguration('control_mode').perform(context),
     )
-    if Path(LaunchConfiguration('moveit_controllers_file').perform(context)).resolve() != root / 'config/moveit_controllers.yaml':
+    expected_controllers_file = (root / 'config/moveit_controllers.yaml').resolve()
+    if Path(LaunchConfiguration('moveit_controllers_file').perform(context)).resolve() != expected_controllers_file:
         raise ValueError('Select controllers only in config/moveit_controllers.yaml')
     description_file = _required_file(context, "robot_description_file")
     srdf_file = _required_file(context, "robot_srdf_file")
