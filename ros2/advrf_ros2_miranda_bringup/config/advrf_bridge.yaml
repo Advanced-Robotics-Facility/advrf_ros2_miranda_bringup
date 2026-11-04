@@ -1,13 +1,12 @@
 # ROS bridge only. EtherCAT client configuration stays in ec_cfg.yaml.
-/**/advrf_ros2_ecat:
+/**/bridge_ecat_client_node:
   ros__parameters:
     period_ms: 5
     read_only: false
-    auto_start: false
     qos:
       state:
         depth: 10
-        reliability: best_effort
+        reliability: reliable
         durability: volatile
       command:
         depth: 1

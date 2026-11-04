@@ -17,11 +17,7 @@
   <exec_depend>joy</exec_depend>
   <exec_depend>python3-yaml</exec_depend>
   <exec_depend>concert_resources</exec_depend>
-  <exec_depend>controller_manager</exec_depend>
   <exec_depend>dagana_urdf</exec_depend>
-  <exec_depend>hardware_interface</exec_depend>
-  <exec_depend>joint_state_broadcaster</exec_depend>
-  <exec_depend>joint_trajectory_controller</exec_depend>
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>moveit_configs_utils</exec_depend>

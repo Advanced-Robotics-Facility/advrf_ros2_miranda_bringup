@@ -7,8 +7,7 @@ client/master configuration remains in configs/ecat-miranda-config.
 source install/setup.bash
 ros2 launch advrf_ros2_miranda_bringup debug.launch.py
 ros2 launch advrf_ros2_miranda_bringup debug.launch.py use_joy:=true
-ros2 launch advrf_ros2_miranda_bringup miranda.launch.py use_moveit:=true use_rviz:=true
-ros2 launch advrf_ros2_miranda_bringup miranda.launch.py use_moveit:=true use_advrf:=false use_rviz:=true
+ros2 launch advrf_ros2_miranda_bringup moveit.launch.py
 ```
 
 `config_dir` defaults to this package's installed share directory. Override it
@@ -22,19 +21,18 @@ ROS_DOMAIN_ID is a ROS environment setting (the workspace setup defaults to 42).
 - config/advrf_bridge.yaml: ROS bridge startup policy and QoS.
 - config/joint_control.yaml: joystick/manual controls.
 - config/moveit_controllers.yaml: shared ADVRF action and ordered joint list.
-- config/moveit_mock_controllers.yaml and ros2_controllers.yaml: mock stack.
 - urdf/, srdf/, rviz/: robot model and visualization assets.
 
-Launch defaults: use_panel=true, use_joy=false, start_bridge=false, use_rviz=false.
+`moveit.launch.py` starts the native bridge, MoveIt and MoveIt RViz.
+`debug.launch.py` starts the native bridge, panel and standard robot RViz;
+`use_joy` defaults to false.
 Only existing gain profiles are included; selecting
 an absent mode fails. Gains retain their previous profile order; launch handles
 the native position/velocity wire permutation. Change control_mode at startup.
 The panel reads limits through the controller's ROS parameter service.
 
-Optional start_bridge=true requires the separate EtherCAT client environment
-(EC_CFG) and running master. The native bridge does not implement replCmd;
-START/STOP through motor_power_node requires a compatible service backend.
-Automatic motor startup is disabled in the supplied ROS configs.
+Both launchers require the selected EtherCAT client environment (`EC_CFG`) and a
+running master. The native bridge starts motors on the first valid command.
 
 
 ## Editing motor parameters

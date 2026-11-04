@@ -19,8 +19,8 @@
     input_timeout: 0.25
     next_button: 5
     previous_button: 4
-    power_on_button: 0
-    power_off_button: 1
+    power_on_button: -1
+    power_off_button: -1
     position_plus_button: -1
     position_minus_button: -1
     position_axis: -1

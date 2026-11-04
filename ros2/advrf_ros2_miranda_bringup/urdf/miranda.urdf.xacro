@@ -1,14 +1,5 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="miranda">
-    <xacro:arg name="initial_positions_file" default="../config/initial_positions.yaml" />
-
     <!-- Import miranda urdf file -->
     <xacro:include filename="miranda.urdf" />
-
-    <!-- Import control_xacro -->
-    <xacro:include filename="miranda.ros2_control.xacro" />
-
-
-    <xacro:miranda_ros2_control name="FakeSystem" initial_positions_file="$(arg initial_positions_file)"/>
-
 </robot>
