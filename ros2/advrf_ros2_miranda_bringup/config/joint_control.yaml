@@ -2,11 +2,12 @@
   ros__parameters:
     # Omit joints to discover names from rx/joint_states.
     # ROS YAML cannot type an empty list; only set this for an explicit filter.
-    # joints: [joint_a, joint_b]
-    position_step: 0.01
-    axis_speed: 1.0
+    # joints: [pitch_3,yaw_3]
 
-    publish_rate: 50.0
+    position_step: 0.01
+    axis_speed: 0.5
+
+    publish_rate: 250.0
     feedback_timeout: 0.5
     input_timeout: 0.25
     power_timeout: 4.0
