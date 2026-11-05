@@ -5,6 +5,7 @@ from pathlib import Path
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from advrf_ros2_motors_controller.launch_config import resolve_ecat_namespace
@@ -174,7 +175,8 @@ def _launch_setup(context):
 
     from advrf_ros2_motors_controller.robot_launch import stack_nodes
     return actions + stack_nodes(
-        robot, namespace, transport_namespace, panel=False, bridge=True, joy=False
+        robot, namespace, transport_namespace, panel=False,
+        bridge=IfCondition(LaunchConfiguration('start_bridge')).evaluate(context), joy=False
     )
 
 
@@ -183,6 +185,10 @@ def generate_launch_description():
         [
             DeclareLaunchArgument("config_dir", default_value=get_package_share_directory("advrf_ros2_miranda_bringup")),
             DeclareLaunchArgument("ecat_namespace", default_value=""),
+            DeclareLaunchArgument(
+                "start_bridge", default_value="false",
+                description="Start the EtherCAT bridge locally",
+            ),
             DeclareLaunchArgument(
                 "robot_description_file",
                 default_value="",

@@ -1,4 +1,4 @@
-"""Launch the native bridge and operator panel, with optional joystick control."""
+"""Launch the operator panel, with optional bridge and joystick control."""
 from pathlib import Path
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -16,9 +16,8 @@ def setup(context):
     filename = 'robot.launch.py'
     args = {name: value(name) for name in
             ('config_dir', 'ecat_namespace', 'control_mode', 'use_joy',
-             'robot_description_file')}
-    args.update(namespace=value('namespace'), use_panel='true', use_rviz='true',
-                start_bridge='true')
+             'robot_description_file', 'start_bridge')}
+    args.update(namespace=value('namespace'), use_panel='true', use_rviz='true')
     return [IncludeLaunchDescription(PythonLaunchDescriptionSource(str(
         Path(get_package_share_directory(package)) / 'launch' / filename)),
         launch_arguments=args.items())]
@@ -28,7 +27,7 @@ def generate_launch_description():
     defaults = {
         'config_dir': str(ROOT), 'namespace': '/advrf/miranda',
         'ecat_namespace': '', 'control_mode': '', 'use_joy': 'false',
-        'robot_description_file': 'auto',
+        'robot_description_file': 'auto', 'start_bridge': 'false',
     }
     return LaunchDescription([DeclareLaunchArgument(k, default_value=v) for k, v in defaults.items()]
                              + [OpaqueFunction(function=setup)])
