@@ -24,7 +24,7 @@
         <joint name="yaw_2" value="0"/>
         <joint name="yaw_3" value="0"/>
     </group_state>
-    <group_state name="pose1" group="arm">
+    <group_state name="pose_goal" group="arm">
         <joint name="pitch_1" value="1.0"/>
         <joint name="pitch_2" value="-1.0"/>
         <joint name="pitch_3" value="0.5"/>
@@ -33,10 +33,10 @@
         <joint name="yaw_3" value="-0.7"/>
     </group_state>
     <group_state name="gripper_open" group="gripper">
-        <joint name="dagana_A_claw_joint" value="1.3"/>
+        <joint name="dagana_A_claw_joint" value="-1.5"/>
     </group_state>
     <group_state name="gripper_close" group="gripper">
-        <joint name="dagana_A_claw_joint" value="0"/>
+        <joint name="dagana_A_claw_joint" value="0.5"/>
     </group_state>
     <!--END EFFECTOR: Purpose: Represent information about an end effector.-->
     <end_effector name="dagana" parent_link="dagana_A_top_link" group="gripper"/>

@@ -18,6 +18,7 @@
 /**/joy_control_node:
   ros__parameters:
     input_timeout: 0.25
+    toggle_active_button: 0  # A / Cross: toggle bridge TX mode
     next_button: 5
     previous_button: 4
     power_on_button: -1

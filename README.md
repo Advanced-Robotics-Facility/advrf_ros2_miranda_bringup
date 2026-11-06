@@ -1,35 +1,87 @@
-# Miranda ADVRF ROS 2 bringup
+# Miranda — quick start
 
-This repository owns Miranda's ROS configuration, robot model, MoveIt setup and
-launch files. The native ROS package is in `ros2/advrf_ros2_miranda_bringup`;
-mesh dependency submodules remain under `dependencies/`.
+ROS and workspace built and sourced. Run commands from the workspace root.
+
+## 1. Dummy — everything on one PC
+
+**Terminal 1 — master**
 
 ```bash
-git submodule update --init --recursive
-source /opt/ros/jazzy/setup.bash
-colcon build --packages-up-to advrf_ros2_miranda_bringup
-source install/setup.bash
+ecat_ws/install/bin/repl -f configs/ecat-miranda-config/robot_ecat/ecat_config.yaml -d
+```
 
-# Bridge, controllers, debug panel and robot RViz
-ros2 launch advrf_ros2_miranda_bringup debug.launch.py
+**Terminal 2 — bridge + joystick + controllers + RViz**
 
-# Add joystick
-ros2 launch advrf_ros2_miranda_bringup debug.launch.py use_joy:=true
+```bash
+export EC_CFG="..."
+ros2 launch advrf_ros2_miranda_bringup miranda.launch.py start_bridge:=true use_joy:=true
+```
 
-# Bridge, MoveIt and MoveIt RViz
+**Or, instead of Terminal 2 — bridge + controllers + MoveIt + RViz**
+
+```bash
+export EC_CFG="$PWD/configs/ecat-miranda-config/ec_cfg.yaml"
+ros2 launch advrf_ros2_miranda_bringup moveit.launch.py start_bridge:=true
+```
+
+## 2. Robot — master and bridge on robot, bringup on PC
+
+**Robot, Terminal 1 — master**
+
+```bash
+ecat_ws/install/bin/repl -f configs/ecat-miranda-config/robot_ecat/ecat_config.yaml
+```
+
+**Robot, Terminal 2 — bridge**
+
+```bash
+export EC_CFG="..."
+ros2 launch advrf_ros2_miranda_bringup bridge.launch.py
+```
+
+The EtherCAT client starts devices during bridge initialization.
+
+**PC — joystick + controllers + panel + RViz**
+
+```bash
+ros2 launch advrf_ros2_miranda_bringup miranda.launch.py use_joy:=true
+```
+
+**Or — controllers + MoveIt + RViz**
+
+```bash
 ros2 launch advrf_ros2_miranda_bringup moveit.launch.py
 ```
 
-The installed package share contains `config/`, `urdf/`, `srdf/`, `rviz/` and
-`launch/`. Configuration is selected through ROS package discovery, with an
-optional `config_dir` override. The bridge still requires the selected profile's
-`EC_CFG` environment.
-See the [package README](ros2/advrf_ros2_miranda_bringup/README.md) for file roles
-and launch options.
+Run one PC bringup. `start_bridge` defaults to `false`; no `EC_CFG` needed on PC.
 
-The separate ecat-miranda-config repository retains EtherCAT master/client
-configuration, device ID maps, client motor profiles and firmware. Its profile
-helpers locate this installed ROS package.
+**Check**
 
-Bench has a separate `advrf_ros2_bench_bringup` package with its own configuration
-and `debug.launch.py` / `bench.launch.py`; it does not require a URDF or MoveIt.
+```bash
+ros2 topic echo /advrf/miranda/ecat/rx/joint_states --once
+ros2 topic echo /diagnostics --once
+```
+
+**TX activation**
+
+TX starts inactive. With joystick, press **A / Cross** to toggle it.
+Without joystick, enable it when ready to send commands:
+
+```bash
+ros2 service call /advrf/miranda/ecat/set_active std_srvs/srv/SetBool '{data: true}'
+```
+
+Use `data: false` to disable TX. Feedback remains available. The 500 ms watchdog
+runs only while active, starting immediately at activation. A timeout deactivates
+TX and latches a STOP fault; restart the bridge before reactivation.
+
+To activate automatically on the first valid command:
+
+```bash
+ros2 launch advrf_ros2_miranda_bringup bridge.launch.py active_on_first_msg:=true
+# Local all-in-one alternative:
+ros2 launch advrf_ros2_miranda_bringup moveit.launch.py start_bridge:=true active_on_first_msg:=true
+```
+
+Default: `false`. Explicit `set_active(false)` cancels automatic activation;
+use the service or A / Cross to reactivate. `read_only` is removed.

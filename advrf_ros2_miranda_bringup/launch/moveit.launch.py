@@ -1,10 +1,13 @@
+import atexit
 import tempfile
+import os
 import yaml
 from pathlib import Path
 
-from ament_index_python.packages import get_package_share_directory
+from ament_index_python.packages import get_package_share_directory, get_package_prefix
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -44,7 +47,7 @@ def _launch_setup(context):
     from advrf_ros2_motors_controller.robot_config import load_robot
     robot = load_robot(
         config_dir,
-        LaunchConfiguration('advrf_namespace').perform(context),
+        LaunchConfiguration('namespace').perform(context),
         LaunchConfiguration('robot_description_file').perform(context),
         LaunchConfiguration('control_mode').perform(context),
     )
@@ -83,8 +86,10 @@ def _launch_setup(context):
         builder.joint_limits(file_path=str(path))
     moveit_config = builder.to_moveit_configs()
 
-    namespace = LaunchConfiguration("advrf_namespace").perform(context)
+    namespace = LaunchConfiguration("namespace").perform(context)
     namespace = "/" + namespace.strip("/") if namespace.strip("/") else ""
+    moveit_namespace = LaunchConfiguration('moveit_namespace').perform(context)
+    moveit_namespace = '/' + moveit_namespace.strip('/') if moveit_namespace.strip('/') else namespace + '/moveit'
     joint_parameters = robot['limits']
     joints = joint_parameters.get("joints", [])
     if not joints:
@@ -126,14 +131,53 @@ def _launch_setup(context):
         context.launch_configurations['ecat_namespace'] = namespace.rstrip('/') + '/ecat'
     transport_namespace = resolve_ecat_namespace(
         LaunchConfiguration("ecat_namespace").perform(context), "", namespace)
-    feedback_remappings = [
-        ("/joint_states", transport_namespace.rstrip("/") + "/rx/joint_states")
-    ]
+    feedback_topic = transport_namespace.rstrip('/') + '/rx/joint_states'
+    feedback_remappings = [('joint_states', feedback_topic), ('/joint_states', feedback_topic)]
+    # Some MoveIt components use absolute names. Keep those inside the same scope.
+    interfaces = (
+        'planning_scene', 'monitored_planning_scene', 'planning_scene_world',
+        'collision_object', 'attached_collision_object', 'display_planned_path',
+        'display_contacts', 'trajectory_execution_event', 'move_action',
+        'execute_trajectory', 'get_planning_scene', 'apply_planning_scene',
+        'compute_ik', 'compute_fk', 'plan_kinematic_path', 'check_state_validity',
+        'query_planner_interface', 'get_planner_params', 'set_planner_params',
+        'clear_octomap', 'get_group_urdf', 'recognize_objects',
+    )
+    moveit_remappings = feedback_remappings + [
+        ('/' + name, moveit_namespace + '/' + name) for name in interfaces
+    ] + [('tf', '/tf'), ('tf_static', '/tf_static')]
 
+    # RViz stores the MoveGroup namespace in its display config, not a ROS parameter.
+    # Adapt a private copy so custom robot namespaces work without editing the source.
+    rviz_document = yaml.safe_load(rviz_config.read_text())
+    for display in rviz_document.get('Visualization Manager', {}).get('Displays', []):
+        if display.get('Class') == 'rviz_default_plugins/MarkerArray' and display.get('Name') == 'Selected Joint':
+            display['Topic']['Value'] = namespace + '/inputs/selected_joint_marker'
+        if display.get('Class') == 'moveit_rviz_plugin/MotionPlanning':
+            display['Move Group Namespace'] = moveit_namespace
+            display['Planning Scene Topic'] = moveit_namespace + '/monitored_planning_scene'
+            display.setdefault('Planned Path', {})['Trajectory Topic'] = moveit_namespace + '/display_planned_path'
+    rviz_directory = tempfile.TemporaryDirectory(prefix='advrf-moveit-rviz-')
+    atexit.register(rviz_directory.cleanup)
+    adapted_rviz = Path(rviz_directory.name) / 'moveit.rviz'
+    adapted_rviz.write_text(yaml.safe_dump(rviz_document))
+
+    # Prefer the libraries shipped with this ROS installation over /usr/local.
+    ros_lib = str(Path(get_package_prefix('moveit_ros_move_group')) / 'lib')
+    moveit_environment = {'LD_LIBRARY_PATH': ros_lib + os.pathsep + os.environ.get('LD_LIBRARY_PATH', '')}
+    # This machine's newer MoveIt messages require Fast CDR 2.3 (ROS ships 2.2).
+    # Scope the compatibility override to MoveIt/RViz, leaving the bridge alone.
+    fastcdr = LaunchConfiguration('fastcdr_library').perform(context)
+    if fastcdr:
+        library = Path(fastcdr).expanduser().resolve(strict=True)
+        moveit_environment['LD_PRELOAD'] = str(library) + (
+            ' ' + os.environ['LD_PRELOAD'] if os.environ.get('LD_PRELOAD') else '')
     actions = [
         Node(
             package="tf2_ros",
             executable="static_transform_publisher",
+            namespace=moveit_namespace,
+            remappings=[("tf", "/tf"), ("tf_static", "/tf_static")],
             name="miranda_world_to_base",
             output="screen",
             arguments=[
@@ -146,44 +190,71 @@ def _launch_setup(context):
         Node(
             package="robot_state_publisher",
             executable="robot_state_publisher",
+            namespace=moveit_namespace,
             output="screen",
             parameters=[moveit_config.robot_description],
-            remappings=feedback_remappings,
+            remappings=moveit_remappings,
         ),
         Node(
             package="moveit_ros_move_group",
             executable="move_group",
+            namespace=moveit_namespace,
+            additional_env=moveit_environment,
             output="screen",
             parameters=[moveit_config.to_dict()],
-            remappings=feedback_remappings,
+            remappings=moveit_remappings,
         ),
         Node(
             package="rviz2",
             executable="rviz2",
+            namespace=moveit_namespace,
             name="moveit_rviz",
-            additional_env={"LC_ALL": "C.UTF-8"},
+            additional_env={**moveit_environment, "LC_ALL": "C.UTF-8"},
             output="screen",
-            arguments=["-d", str(rviz_config)],
+            arguments=["-d", str(adapted_rviz)],
             parameters=[
+                moveit_config.robot_description,
+                moveit_config.robot_description_semantic,
                 moveit_config.planning_pipelines,
                 moveit_config.robot_description_kinematics,
                 moveit_config.joint_limits,
             ],
-            remappings=feedback_remappings,
+            remappings=moveit_remappings,
         ),
     ]
 
-    from advrf_ros2_motors_controller.robot_launch import stack_nodes
-    return actions + stack_nodes(
-        robot, namespace, transport_namespace, panel=False,
-        bridge=IfCondition(LaunchConfiguration('start_bridge')).evaluate(context), joy=False
-    )
+    actions.append(Node(
+        package='advrf_ros2_io', executable='selected_joint_marker_node',
+        namespace=namespace, output='screen',
+        parameters=[{'robot_description': robot['description']}],
+    ))
+    controllers = Path(get_package_share_directory('advrf_ros2_bringup')) / 'launch/controllers.launch.py'
+    return actions + [IncludeLaunchDescription(PythonLaunchDescriptionSource(str(controllers)),
+        launch_arguments={
+            'config_dir': config_dir, 'namespace': namespace,
+            'ecat_namespace': transport_namespace,
+            'robot_description_file': str(description_file),
+            'control_mode': LaunchConfiguration('control_mode').perform(context),
+        }.items()), IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(str(controllers.with_name('hardware.launch.py'))),
+            condition=IfCondition(LaunchConfiguration('start_bridge')),
+            launch_arguments={'config_dir': config_dir, 'namespace': namespace,
+                              'ecat_namespace': transport_namespace,
+                              'active_on_first_msg': LaunchConfiguration('active_on_first_msg').perform(context)}.items())]
 
 
 def generate_launch_description():
     return LaunchDescription(
         [
+            DeclareLaunchArgument(
+                'fastcdr_library',
+                default_value='/usr/local/lib/libfastcdr.so.2' if Path('/usr/local/lib/libfastcdr.so.2').is_file() else '',
+                description='Fast CDR compatibility library for MoveIt/RViz; empty disables the override',
+            ),
             DeclareLaunchArgument("config_dir", default_value=get_package_share_directory("advrf_ros2_miranda_bringup")),
+            DeclareLaunchArgument('moveit_namespace', default_value='',
+                                  description='Default: <namespace>/moveit'),
+            DeclareLaunchArgument('active_on_first_msg', default_value='', choices=['', 'true', 'false']),
             DeclareLaunchArgument("ecat_namespace", default_value=""),
             DeclareLaunchArgument(
                 "start_bridge", default_value="false",
@@ -214,7 +285,7 @@ def generate_launch_description():
                 default_value="",
             ),
             DeclareLaunchArgument(
-                "advrf_namespace",
+                "namespace",
                 default_value="/advrf/miranda",
                 description="High-level ROS namespace",
             ),
