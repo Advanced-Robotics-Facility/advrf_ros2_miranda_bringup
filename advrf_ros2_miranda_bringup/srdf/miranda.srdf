@@ -12,6 +12,10 @@
     <group name="arm">
         <chain base_link="base_link" tip_link="dagana_A_top_link"/>
     </group>
+    <group name="arm-top">
+        <joint name="yaw_3"/>
+        <joint name="pitch_3"/>
+    </group>
     <group name="gripper">
         <joint name="dagana_A_claw_joint"/>
     </group>
@@ -32,6 +36,11 @@
         <joint name="yaw_2" value="-0.7"/>
         <joint name="yaw_3" value="-0.7"/>
     </group_state>
+      <group_state name="pose_goal" group="arm-top">
+        <joint name="pitch_3" value="0.5"/>
+        <joint name="yaw_3" value="-0.7"/>
+    </group_state>
+    
     <group_state name="gripper_open" group="gripper">
         <joint name="dagana_A_claw_joint" value="-1.5"/>
     </group_state>
