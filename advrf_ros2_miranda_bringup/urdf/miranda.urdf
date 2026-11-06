@@ -114,7 +114,8 @@
     <parent link="J2_A_stator" />
     <child link="L_2_A" />
     <origin rpy="-1.5707963267948966 -0.0 0.0" xyz="0.0 0.13666 0.0875" />
-    <limit effort="460.0" lower="-2.75" upper="2.75" velocity="2.14" />
+    <!-- <limit effort="460.0" lower="-2.75" upper="2.75" velocity="2.14" /> -->
+    <limit effort="460.0" lower="-1.57" upper="1.57" velocity="2.14" />
     <axis xyz="0 0 1" />
   </joint>
   <link name="L_2_A">

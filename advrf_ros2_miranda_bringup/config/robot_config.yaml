@@ -30,8 +30,8 @@
       pitch_1:
         id: 12  # Real hardware ID: 12
         limits:
-          position_lower: -2.75
-          position_upper: 2.75
+          position_lower: -1.57 #-2.75
+          position_upper: +1.57 #2.75
           max_velocity: 2.14
           max_acceleration: 1.0
         profiles:
