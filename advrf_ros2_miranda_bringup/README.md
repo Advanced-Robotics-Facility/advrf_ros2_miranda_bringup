@@ -83,7 +83,7 @@ TX starts inactive. With joystick, press **A / Cross** to toggle it.
 Without joystick, enable it when ready to send commands:
 
 ```bash
-ros2 service call /advrf/miranda/ecat/set_active std_srvs/srv/SetBool '{data: true}'
+ros2 service call /advrf/miranda/ecat/set_active_tx std_srvs/srv/SetBool '{data: true}'
 ```
 
 Use `data: false` to disable TX. Feedback remains available. The 500 ms watchdog
@@ -93,10 +93,10 @@ TX and latches a STOP fault; restart the bridge before reactivation.
 To activate automatically on the first valid command:
 
 ```bash
-ros2 launch advrf_ros2_miranda_bringup bridge.launch.py active_on_first_msg:=true
+ros2 launch advrf_ros2_miranda_bringup bridge.launch.py active_tx_on_first_msg:=true
 # Local all-in-one alternative:
-ros2 launch advrf_ros2_miranda_bringup moveit.launch.py start_bridge:=true active_on_first_msg:=true
+ros2 launch advrf_ros2_miranda_bringup moveit.launch.py start_bridge:=true active_tx_on_first_msg:=true
 ```
 
-Default: `false`. Explicit `set_active(false)` cancels automatic activation;
+Default: `false`. Explicit `set_active_tx(false)` cancels automatic activation;
 use the service or A / Cross to reactivate. `read_only` is removed.

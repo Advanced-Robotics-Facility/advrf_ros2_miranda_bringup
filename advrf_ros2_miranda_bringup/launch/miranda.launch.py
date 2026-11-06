@@ -16,7 +16,7 @@ def setup(context):
     filename = 'robot.launch.py'
     args = {name: value(name) for name in
             ('config_dir', 'ecat_namespace', 'control_mode', 'use_joy',
-             'robot_description_file', 'start_bridge', 'active_on_first_msg')}
+             'robot_description_file', 'start_bridge', 'active_tx_on_first_msg')}
     args.update(namespace=value('namespace'), use_panel=value('use_panel'),
                 use_rviz=value('use_rviz'), rviz_config=value('rviz_config'))
     return [IncludeLaunchDescription(PythonLaunchDescriptionSource(str(
@@ -29,7 +29,7 @@ def generate_launch_description():
         'config_dir': str(ROOT), 'namespace': '/advrf/miranda',
         'ecat_namespace': '', 'control_mode': '', 'use_joy': 'false',
         'robot_description_file': 'auto', 'start_bridge': 'false',
-        'use_panel': 'true', 'use_rviz': 'true', 'active_on_first_msg': '',
+        'use_panel': 'true', 'use_rviz': 'true', 'active_tx_on_first_msg': '',
         'rviz_config': str(ROOT / 'rviz/miranda.rviz'),
     }
     return LaunchDescription([DeclareLaunchArgument(k, default_value=v) for k, v in defaults.items()]

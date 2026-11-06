@@ -233,7 +233,7 @@ def _launch_setup(context):
             condition=IfCondition(LaunchConfiguration('start_bridge')),
             launch_arguments={'config_dir': config_dir, 'namespace': namespace,
                               'ecat_namespace': transport_namespace,
-                              'active_on_first_msg': LaunchConfiguration('active_on_first_msg').perform(context)}.items())]
+                              'active_tx_on_first_msg': LaunchConfiguration('active_tx_on_first_msg').perform(context)}.items())]
 
 
 def generate_launch_description():
@@ -242,7 +242,7 @@ def generate_launch_description():
             DeclareLaunchArgument("config_dir", default_value=get_package_share_directory("advrf_ros2_miranda_bringup")),
             DeclareLaunchArgument('moveit_namespace', default_value='',
                                   description='Default: <namespace>/moveit'),
-            DeclareLaunchArgument('active_on_first_msg', default_value='', choices=['', 'true', 'false']),
+            DeclareLaunchArgument('active_tx_on_first_msg', default_value='', choices=['', 'true', 'false']),
             DeclareLaunchArgument("ecat_namespace", default_value=""),
             DeclareLaunchArgument(
                 "start_bridge", default_value="false",

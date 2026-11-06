@@ -2,7 +2,7 @@
 /**/bridge_ecat_client_node:
   ros__parameters:
     period_ms: 5
-    active_on_first_msg: false
+    active_tx_on_first_msg: false
     qos:
       state:
         depth: 10
