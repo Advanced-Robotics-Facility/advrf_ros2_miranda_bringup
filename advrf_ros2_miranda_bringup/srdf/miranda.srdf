@@ -29,18 +29,22 @@
         <joint name="yaw_3" value="0"/>
     </group_state>
     <group_state name="pose_goal" group="arm">
-        <joint name="pitch_1" value="1.0"/>
-        <joint name="pitch_2" value="-1.0"/>
-        <joint name="pitch_3" value="0.5"/>
-        <joint name="yaw_1" value="-0.4"/>
-        <joint name="yaw_2" value="-0.7"/>
-        <joint name="yaw_3" value="-0.7"/>
+        <joint name="yaw_1" value="1.5547494888305664"/>
+        <joint name="pitch_1" value="-0.12155599147081375"/>
+        <joint name="yaw_2" value="-2.286590099334717"/>
+        <joint name="pitch_2" value="-0.2550722360610962"/>
+        <joint name="yaw_3" value="-0.5603703856468201"/>
+        <joint name="pitch_3" value="-0.34392330050468445"/>
+    </group_state>
+    <group_state name="home" group="arm-top">
+        <joint name="yaw_3" value="0"/>
+        <joint name="pitch_3" value="0"/>
     </group_state>
       <group_state name="pose_goal" group="arm-top">
-        <joint name="pitch_3" value="0.5"/>
-        <joint name="yaw_3" value="-0.7"/>
+        <joint name="yaw_3" value="-2.3598976135253906"/>
+        <joint name="pitch_3" value="-1.1299086809158325"/>
     </group_state>
-    
+
     <group_state name="gripper_open" group="gripper">
         <joint name="dagana_A_claw_joint" value="-1.5"/>
     </group_state>

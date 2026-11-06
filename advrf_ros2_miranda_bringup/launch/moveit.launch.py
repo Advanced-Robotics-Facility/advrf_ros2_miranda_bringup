@@ -165,13 +165,6 @@ def _launch_setup(context):
     # Prefer the libraries shipped with this ROS installation over /usr/local.
     ros_lib = str(Path(get_package_prefix('moveit_ros_move_group')) / 'lib')
     moveit_environment = {'LD_LIBRARY_PATH': ros_lib + os.pathsep + os.environ.get('LD_LIBRARY_PATH', '')}
-    # This machine's newer MoveIt messages require Fast CDR 2.3 (ROS ships 2.2).
-    # Scope the compatibility override to MoveIt/RViz, leaving the bridge alone.
-    fastcdr = LaunchConfiguration('fastcdr_library').perform(context)
-    if fastcdr:
-        library = Path(fastcdr).expanduser().resolve(strict=True)
-        moveit_environment['LD_PRELOAD'] = str(library) + (
-            ' ' + os.environ['LD_PRELOAD'] if os.environ.get('LD_PRELOAD') else '')
     actions = [
         Node(
             package="tf2_ros",
@@ -246,11 +239,6 @@ def _launch_setup(context):
 def generate_launch_description():
     return LaunchDescription(
         [
-            DeclareLaunchArgument(
-                'fastcdr_library',
-                default_value='/usr/local/lib/libfastcdr.so.2' if Path('/usr/local/lib/libfastcdr.so.2').is_file() else '',
-                description='Fast CDR compatibility library for MoveIt/RViz; empty disables the override',
-            ),
             DeclareLaunchArgument("config_dir", default_value=get_package_share_directory("advrf_ros2_miranda_bringup")),
             DeclareLaunchArgument('moveit_namespace', default_value='',
                                   description='Default: <namespace>/moveit'),
