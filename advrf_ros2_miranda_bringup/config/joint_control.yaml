@@ -3,7 +3,7 @@
     # Omit joints to discover names from rx/joint_states.
     # ROS YAML cannot type an empty list; only set this for an explicit filter.
     
-    joints: [pitch_3,yaw_3,dagana_A_claw_joint]
+    #joints: [pitch_3,yaw_3,dagana_A_claw_joint]
     position_step: 0.01
     axis_speed: 0.5
 
