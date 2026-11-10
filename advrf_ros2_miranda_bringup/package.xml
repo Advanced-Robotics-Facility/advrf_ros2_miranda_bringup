@@ -12,6 +12,7 @@
 
   <exec_depend>ament_index_python</exec_depend>
   <exec_depend>advrf_ros2_bringup</exec_depend>
+  <exec_depend>advrf_ros2_gravity_compensation</exec_depend>
   <exec_depend>advrf_ros2_motors_controller</exec_depend>
   <exec_depend>python3-yaml</exec_depend>
   <exec_depend>concert_resources</exec_depend>
