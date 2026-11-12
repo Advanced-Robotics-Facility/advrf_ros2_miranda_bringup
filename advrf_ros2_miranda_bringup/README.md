@@ -100,3 +100,26 @@ ros2 launch advrf_ros2_miranda_bringup moveit.launch.py start_bridge:=true activ
 
 Default: `false`. Explicit `set_active_tx(false)` cancels automatic activation;
 use the service or A / Cross to reactivate. `read_only` is removed.
+
+## Dependencies
+
+- `ament_index_python`
+- `advrf_ros2_bringup`
+- `advrf_ros2_gravity_compensation`
+- `advrf_ros2_motors_controller`
+- `concert_resources`
+- `dagana_urdf`
+- `launch`
+- `launch_ros`
+- `moveit_configs_utils`
+- `moveit_kinematics`
+- `moveit_planners`
+- `moveit_ros_move_group`
+- `moveit_ros_visualization`
+- `moveit_simple_controller_manager`
+- `robot_state_publisher`
+- `rviz2`
+- `advrf_ros2_io`
+- `rmw_cyclonedds_cpp`
+- `tf2_ros`
+- `xacro`

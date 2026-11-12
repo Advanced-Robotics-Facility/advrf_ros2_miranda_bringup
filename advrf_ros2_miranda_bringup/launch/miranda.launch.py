@@ -15,7 +15,7 @@ def setup(context):
     package = 'advrf_ros2_bringup'
     filename = 'robot.launch.py'
     args = {name: value(name) for name in
-            ('config_dir', 'ecat_namespace', 'control_mode', 'use_joy',
+            ('robot_config', 'controller_config', 'controllers_config', 'joint_control_config', 'bridge_config', 'control_mode', 'use_joy',
              'robot_description_file', 'start_bridge', 'active_tx_on_first_msg')}
     args.update(namespace=value('namespace'), use_panel=value('use_panel'),
                 use_rviz=value('use_rviz'), rviz_config=value('rviz_config'))
@@ -26,9 +26,13 @@ def setup(context):
 
 def generate_launch_description():
     defaults = {
-        'config_dir': str(ROOT), 'namespace': '/advrf/miranda',
-        'ecat_namespace': '', 'control_mode': '', 'use_joy': 'false',
-        'robot_description_file': 'auto', 'start_bridge': 'false',
+        'bridge_config': str(ROOT / 'config/advrf_bridge.yaml'),
+        'robot_config': str(ROOT / 'config/robot_config.yaml'),
+        'controller_config': str(ROOT / 'config/moveit_controllers.yaml'),
+        'controllers_config': str(ROOT / 'config/advrf_controllers.yaml'),
+        'joint_control_config': str(ROOT / 'config/joint_control.yaml'), 'namespace': '/advrf/miranda',
+        'control_mode': '', 'use_joy': 'false',
+        'robot_description_file': str(ROOT / 'urdf/miranda.urdf.xacro'), 'start_bridge': 'false',
         'use_panel': 'true', 'use_rviz': 'true', 'active_tx_on_first_msg': '',
         'rviz_config': str(ROOT / 'rviz/miranda.rviz'),
     }

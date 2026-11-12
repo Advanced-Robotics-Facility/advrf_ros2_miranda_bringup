@@ -18,10 +18,12 @@ def generate_launch_description():
         'advrf_ros2_gravity_compensation')) / 'launch/gravity_compensation.launch.py'
 
     arguments = [
-        DeclareLaunchArgument('config_dir', default_value=share),
+        DeclareLaunchArgument('robot_config', default_value=str(Path(share) / 'config/robot_config.yaml')),
+        DeclareLaunchArgument('controller_config', default_value=str(Path(share) / 'config/moveit_controllers.yaml')),
+        DeclareLaunchArgument('controllers_config', default_value=str(Path(share) / 'config/advrf_controllers.yaml')),
+        DeclareLaunchArgument('bridge_config', default_value=str(Path(share) / 'config/advrf_bridge.yaml')),
         DeclareLaunchArgument('namespace', default_value='/advrf/miranda'),
-        DeclareLaunchArgument('ecat_namespace', default_value=''),
-        DeclareLaunchArgument('robot_description_file', default_value='auto'),
+        DeclareLaunchArgument('robot_description_file', default_value=str(Path(share) / 'urdf/miranda.urdf.xacro')),
         DeclareLaunchArgument('gain_ramp_duration', default_value='3.0'),
         DeclareLaunchArgument('start_bridge', default_value='false', choices=['true', 'false']),
         DeclareLaunchArgument('active_tx_on_first_msg', default_value='false', choices=['true', 'false']),
@@ -33,20 +35,16 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(str(common / 'hardware.launch.py')),
         condition=IfCondition(LaunchConfiguration('start_bridge')),
         launch_arguments={
-            'config_dir': LaunchConfiguration('config_dir'),
+            'bridge_config': LaunchConfiguration('bridge_config'),
             'namespace': LaunchConfiguration('namespace'),
-            'ecat_namespace': LaunchConfiguration('ecat_namespace'),
             'active_tx_on_first_msg': LaunchConfiguration('active_tx_on_first_msg'),
         }.items(),
     )
     view = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(str(common / 'visualization.launch.py')),
         launch_arguments={
-            'config_dir': LaunchConfiguration('config_dir'),
             'namespace': LaunchConfiguration('namespace'),
-            'ecat_namespace': LaunchConfiguration('ecat_namespace'),
             'robot_description_file': LaunchConfiguration('robot_description_file'),
-            'control_mode': 'impedance',
             'use_rviz': LaunchConfiguration('use_rviz'),
             'rviz_config': LaunchConfiguration('rviz_config'),
         }.items(),
@@ -54,9 +52,10 @@ def generate_launch_description():
     gravity = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(str(gravity_file)),
         launch_arguments={
-            'config_dir': LaunchConfiguration('config_dir'),
+            'robot_config': LaunchConfiguration('robot_config'),
+            'controller_config': LaunchConfiguration('controller_config'),
+            'controllers_config': LaunchConfiguration('controllers_config'),
             'namespace': LaunchConfiguration('namespace'),
-            'ecat_namespace': LaunchConfiguration('ecat_namespace'),
             'robot_description_file': LaunchConfiguration('robot_description_file'),
             'gravity_joints': ARM_JOINTS,
             'gain_ramp_duration': LaunchConfiguration('gain_ramp_duration'),

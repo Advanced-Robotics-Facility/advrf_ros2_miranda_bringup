@@ -27,33 +27,15 @@ def _required_file(context, argument: str) -> Path:
 
 
 def _launch_setup(context):
-    config_dir = LaunchConfiguration("config_dir").perform(context)
-    root = Path(config_dir).expanduser().resolve(strict=True)
-    if not (root / 'config/robot_config.yaml').is_file():
-        raise RuntimeError(f"Missing central ROS configuration: {root / 'config/robot_config.yaml'}")
-    defaults = {
-        'robot_description_file': root / 'urdf/miranda.urdf.xacro',
-        'robot_srdf_file': root / 'srdf/miranda.srdf',
-        'kinematics_file': root / 'config/kinematics.yaml',
-        'moveit_controllers_file': root / 'config/moveit_controllers.yaml',
-        'pilz_cartesian_limits_file': root / 'config/pilz_cartesian_limits.yaml',
-        'rviz_config': root / 'rviz/moveit.rviz',
-    }
-    for name, path in defaults.items():
-        if not LaunchConfiguration(name).perform(context) or (
-                name == 'robot_description_file' and
-                LaunchConfiguration(name).perform(context) == 'auto'):
-            context.launch_configurations[name] = str(path)
     from advrf_ros2_bringup.robot_config import load_robot
     robot = load_robot(
-        config_dir,
+        LaunchConfiguration('robot_config').perform(context),
         LaunchConfiguration('namespace').perform(context),
         LaunchConfiguration('robot_description_file').perform(context),
         LaunchConfiguration('control_mode').perform(context),
+        controller_config=LaunchConfiguration('moveit_controllers_file').perform(context),
+        controllers_config=LaunchConfiguration('controllers_config').perform(context),
     )
-    expected_controllers_file = (root / 'config/moveit_controllers.yaml').resolve()
-    if Path(LaunchConfiguration('moveit_controllers_file').perform(context)).resolve() != expected_controllers_file:
-        raise ValueError('Select controllers only in config/moveit_controllers.yaml')
     description_file = _required_file(context, "robot_description_file")
     srdf_file = _required_file(context, "robot_srdf_file")
     kinematics_file = _required_file(context, "kinematics_file")
@@ -127,10 +109,7 @@ def _launch_setup(context):
             },
         },
     }
-    if not LaunchConfiguration('ecat_namespace').perform(context):
-        context.launch_configurations['ecat_namespace'] = namespace.rstrip('/') + '/ecat'
-    transport_namespace = resolve_ecat_namespace(
-        LaunchConfiguration("ecat_namespace").perform(context), namespace)
+    transport_namespace = resolve_ecat_namespace(namespace)
     feedback_topic = transport_namespace.rstrip('/') + '/rx/joint_states'
     feedback_remappings = [('joint_states', feedback_topic), ('/joint_states', feedback_topic)]
     # Some MoveIt components use absolute names. Keep those inside the same scope.
@@ -224,53 +203,57 @@ def _launch_setup(context):
     controllers = Path(get_package_share_directory('advrf_ros2_bringup')) / 'launch/controllers.launch.py'
     return actions + [IncludeLaunchDescription(PythonLaunchDescriptionSource(str(controllers)),
         launch_arguments={
-            'config_dir': config_dir, 'namespace': namespace,
-            'ecat_namespace': transport_namespace,
+            'robot_config': LaunchConfiguration('robot_config').perform(context),
+            'controller_config': str(controllers_file),
+            'controllers_config': LaunchConfiguration('controllers_config').perform(context),
+            'namespace': namespace,
             'robot_description_file': str(description_file),
             'control_mode': LaunchConfiguration('control_mode').perform(context),
         }.items()), IncludeLaunchDescription(
             PythonLaunchDescriptionSource(str(controllers.with_name('hardware.launch.py'))),
             condition=IfCondition(LaunchConfiguration('start_bridge')),
-            launch_arguments={'config_dir': config_dir, 'namespace': namespace,
-                              'ecat_namespace': transport_namespace,
+            launch_arguments={'bridge_config': LaunchConfiguration('bridge_config').perform(context), 'namespace': namespace,
                               'active_tx_on_first_msg': LaunchConfiguration('active_tx_on_first_msg').perform(context)}.items())]
 
 
 def generate_launch_description():
+    root = Path(get_package_share_directory('advrf_ros2_miranda_bringup'))
     return LaunchDescription(
         [
-            DeclareLaunchArgument("config_dir", default_value=get_package_share_directory("advrf_ros2_miranda_bringup")),
+            DeclareLaunchArgument('robot_config', default_value=str(root / 'config/robot_config.yaml')),
+            DeclareLaunchArgument('controllers_config', default_value=str(root / 'config/advrf_controllers.yaml')),
+            DeclareLaunchArgument('bridge_config', default_value=str(Path(
+                get_package_share_directory('advrf_ros2_miranda_bringup')) / 'config/advrf_bridge.yaml')),
             DeclareLaunchArgument('moveit_namespace', default_value='',
                                   description='Default: <namespace>/moveit'),
             DeclareLaunchArgument('active_tx_on_first_msg', default_value='', choices=['', 'true', 'false']),
-            DeclareLaunchArgument("ecat_namespace", default_value=""),
             DeclareLaunchArgument(
                 "start_bridge", default_value="false",
                 description="Start the EtherCAT bridge locally",
             ),
             DeclareLaunchArgument(
                 "robot_description_file",
-                default_value="",
+                default_value=str(root / "urdf/miranda.urdf.xacro"),
             ),
             DeclareLaunchArgument(
                 "robot_srdf_file",
-                default_value="",
+                default_value=str(root / "srdf/miranda.srdf"),
             ),
             DeclareLaunchArgument(
                 "kinematics_file",
-                default_value="",
+                default_value=str(root / "config/kinematics.yaml"),
             ),
             DeclareLaunchArgument(
                 "moveit_controllers_file",
-                default_value="",
+                default_value=str(root / "config/moveit_controllers.yaml"),
             ),
             DeclareLaunchArgument(
                 "pilz_cartesian_limits_file",
-                default_value="",
+                default_value=str(root / "config/pilz_cartesian_limits.yaml"),
             ),
             DeclareLaunchArgument(
                 "rviz_config",
-                default_value="",
+                default_value=str(root / "rviz/moveit.rviz"),
             ),
             DeclareLaunchArgument(
                 "namespace",

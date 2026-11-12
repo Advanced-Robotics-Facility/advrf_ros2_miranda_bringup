@@ -10,11 +10,11 @@ from launch.substitutions import LaunchConfiguration
 def generate_launch_description():
     common = Path(get_package_share_directory('advrf_ros2_bringup')) / 'launch/hardware.launch.py'
     return LaunchDescription([
-        DeclareLaunchArgument('config_dir', default_value=get_package_share_directory('advrf_ros2_miranda_bringup')),
+        DeclareLaunchArgument('bridge_config', default_value=str(Path(
+            get_package_share_directory('advrf_ros2_miranda_bringup')) / 'config/advrf_bridge.yaml')),
         DeclareLaunchArgument('active_tx_on_first_msg', default_value='', choices=['', 'true', 'false']),
         DeclareLaunchArgument('namespace', default_value='/advrf/miranda'),
-        DeclareLaunchArgument('ecat_namespace', default_value='/advrf/miranda/ecat'),
         IncludeLaunchDescription(PythonLaunchDescriptionSource(str(common)),
             launch_arguments={name: LaunchConfiguration(name) for name in
-                              ('config_dir', 'namespace', 'ecat_namespace', 'active_tx_on_first_msg')}.items()),
+                              ('bridge_config', 'namespace', 'active_tx_on_first_msg')}.items()),
     ])
