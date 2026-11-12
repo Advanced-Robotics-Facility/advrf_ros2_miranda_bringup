@@ -1,8 +1,9 @@
 # ROS bridge only. EtherCAT client configuration stays in ec_cfg.yaml.
 /**/bridge_ecat_client_node:
   ros__parameters:
-    period_ms: 5
+    period_ms: 4
     active_tx_on_first_msg: false
+    command_timeout_msd: 10
     qos:
       state:
         depth: 10

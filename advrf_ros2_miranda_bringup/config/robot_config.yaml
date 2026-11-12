@@ -2,7 +2,7 @@
 # rqt edits require ~/save and restarting consumers.
 /**/robot_config_node:
   ros__parameters:
-    control_mode: position
+    control_mode: impedance
     planning:
       default_velocity_scaling_factor: 0.1
       default_acceleration_scaling_factor: 0.1
