@@ -1,6 +1,12 @@
 # ROS bridge only. EtherCAT client configuration stays in ec_cfg.yaml.
 /**/bridge_ecat_client_node:
   ros__parameters:
+    # Launch-only mapping; paths are relative to the EC_CFG robot control YAML.
+    motor_start_profiles:
+      position: motor/miranda_pos_3b.yaml
+      impedance: motor/miranda_imp_d4.yaml
+      idle: motor/miranda_idle.yaml
+
     period_ms: 4
     active_tx_on_first_msg: false
     command_timeout_ms: 10

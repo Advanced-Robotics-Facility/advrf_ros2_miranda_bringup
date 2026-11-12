@@ -213,7 +213,8 @@ def _launch_setup(context):
             PythonLaunchDescriptionSource(str(controllers.with_name('hardware.launch.py'))),
             condition=IfCondition(LaunchConfiguration('start_bridge')),
             launch_arguments={'bridge_config': LaunchConfiguration('bridge_config').perform(context), 'namespace': namespace,
-                              'active_tx_on_first_msg': LaunchConfiguration('active_tx_on_first_msg').perform(context)}.items())]
+                              'active_tx_on_first_msg': LaunchConfiguration('active_tx_on_first_msg').perform(context),
+                              'control_mode': LaunchConfiguration('control_mode').perform(context)}.items())]
 
 
 def generate_launch_description():

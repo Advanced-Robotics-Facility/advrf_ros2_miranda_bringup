@@ -2,7 +2,7 @@
 # Parameter edits remain in memory; update this file and restart consumers to apply changes.
 /**/robot_config_node:
   ros__parameters:
-    control_mode: position
+    control_mode: impedance
     planning:
       default_velocity_scaling_factor: 0.1
       default_acceleration_scaling_factor: 0.1
@@ -20,7 +20,7 @@
             gain_1: 10.0
             gain_2: 1.0
             gain_3: 0.007
-            gain_4: 0.7
+            gain_4: 0.6
           position:
             gain_0: 200.0
             gain_1: 0.0
@@ -40,7 +40,7 @@
             gain_1: 10.0
             gain_2: 1.0
             gain_3: 0.007
-            gain_4: 0.7
+            gain_4: 0.6
           position:
             gain_0: 200.0
             gain_1: 0.0
@@ -60,7 +60,7 @@
             gain_1: 10.0
             gain_2: 1.0
             gain_3: 0.007
-            gain_4: 0.7
+            gain_4: 0.6
           position:
             gain_0: 200.0
             gain_1: 0.0
@@ -80,7 +80,7 @@
             gain_1: 10.0
             gain_2: 1.0
             gain_3: 0.007
-            gain_4: 0.7
+            gain_4: 0.6
           position:
             gain_0: 200.0
             gain_1: 0.0
@@ -100,7 +100,7 @@
             gain_1: 10.0
             gain_2: 1.0
             gain_3: 0.007
-            gain_4: 0.7
+            gain_4: 0.6
           position:
             gain_0: 200.0
             gain_1: 0.0
@@ -120,7 +120,7 @@
             gain_1: 10.0
             gain_2: 1.0
             gain_3: 0.007
-            gain_4: 0.7
+            gain_4: 0.6
           position:
             gain_0: 200.0
             gain_1: 0.0
@@ -140,7 +140,7 @@
             gain_1: 10.0
             gain_2: 1.0
             gain_3: 0.007
-            gain_4: 0.7
+            gain_4: 0.6
           position:
             gain_0: 200.0
             gain_1: 0.0

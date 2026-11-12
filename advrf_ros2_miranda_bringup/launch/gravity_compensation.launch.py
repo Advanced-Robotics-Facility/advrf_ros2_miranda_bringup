@@ -35,6 +35,7 @@ def generate_launch_description():
             'bridge_config': LaunchConfiguration('bridge_config'),
             'namespace': LaunchConfiguration('namespace'),
             'active_tx_on_first_msg': LaunchConfiguration('active_tx_on_first_msg'),
+            'control_mode': 'impedance',
         }.items(),
     )
     view = IncludeLaunchDescription(
