@@ -1,0 +1,10 @@
+# Controlled joints, in motor command order. IDs and gains come from robot_config.yaml.
+/**/gravity_compensation:
+  ros__parameters:
+    joints:
+      - yaw_1
+      - pitch_1
+      - yaw_2
+      - pitch_2
+      - yaw_3
+      - pitch_3

@@ -8,14 +8,10 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 
 
-ARM_JOINTS = 'yaw_1,pitch_1,yaw_2,pitch_2,yaw_3,pitch_3'
-
-
 def generate_launch_description():
     share = get_package_share_directory('advrf_ros2_miranda_bringup')
     common = Path(get_package_share_directory('advrf_ros2_bringup')) / 'launch'
-    gravity_file = Path(get_package_share_directory(
-        'advrf_ros2_gravity_compensation')) / 'launch/gravity_compensation.launch.py'
+    gravity_file = common / 'gravity_compensation.launch.py'
 
     arguments = [
         DeclareLaunchArgument('robot_config', default_value=str(Path(share) / 'config/robot_config.yaml')),
@@ -24,6 +20,7 @@ def generate_launch_description():
         DeclareLaunchArgument('bridge_config', default_value=str(Path(share) / 'config/advrf_bridge.yaml')),
         DeclareLaunchArgument('namespace', default_value='/advrf/miranda'),
         DeclareLaunchArgument('robot_description_file', default_value=str(Path(share) / 'urdf/miranda.urdf.xacro')),
+        DeclareLaunchArgument('gravity_config', default_value=str(Path(share) / 'config/gravity_compensation.yaml')),
         DeclareLaunchArgument('gain_ramp_duration', default_value='3.0'),
         DeclareLaunchArgument('start_bridge', default_value='false', choices=['true', 'false']),
         DeclareLaunchArgument('active_tx_on_first_msg', default_value='false', choices=['true', 'false']),
@@ -57,7 +54,7 @@ def generate_launch_description():
             'controllers_config': LaunchConfiguration('controllers_config'),
             'namespace': LaunchConfiguration('namespace'),
             'robot_description_file': LaunchConfiguration('robot_description_file'),
-            'gravity_joints': ARM_JOINTS,
+            'gravity_config': LaunchConfiguration('gravity_config'),
             'gain_ramp_duration': LaunchConfiguration('gain_ramp_duration'),
         }.items(),
     )
