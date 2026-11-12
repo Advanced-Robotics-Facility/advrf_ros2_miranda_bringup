@@ -1,5 +1,5 @@
 # Single motor definition. Scalar gains use profile order; launch adapts command wire slots.
-# rqt edits require ~/save and restarting consumers.
+# Parameter edits remain in memory; update this file and restart consumers to apply changes.
 /**/robot_config_node:
   ros__parameters:
     control_mode: position

@@ -22,7 +22,7 @@ def generate_launch_description():
         DeclareLaunchArgument('namespace', default_value='/advrf/miranda'),
         DeclareLaunchArgument('ecat_namespace', default_value=''),
         DeclareLaunchArgument('robot_description_file', default_value='auto'),
-        DeclareLaunchArgument('torque_scale', default_value='0.0'),
+        DeclareLaunchArgument('gain_ramp_duration', default_value='3.0'),
         DeclareLaunchArgument('start_bridge', default_value='false', choices=['true', 'false']),
         DeclareLaunchArgument('active_tx_on_first_msg', default_value='false', choices=['true', 'false']),
         DeclareLaunchArgument('use_rviz', default_value='false', choices=['true', 'false']),
@@ -59,7 +59,7 @@ def generate_launch_description():
             'ecat_namespace': LaunchConfiguration('ecat_namespace'),
             'robot_description_file': LaunchConfiguration('robot_description_file'),
             'gravity_joints': ARM_JOINTS,
-            'torque_scale': LaunchConfiguration('torque_scale'),
+            'gain_ramp_duration': LaunchConfiguration('gain_ramp_duration'),
         }.items(),
     )
     return LaunchDescription(arguments + [bridge, view, gravity])

@@ -11,7 +11,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
-from advrf_ros2_motors_controller.launch_config import resolve_ecat_namespace
+from advrf_ros2_motors_controller.ros_names import resolve_ecat_namespace
 from moveit_configs_utils import MoveItConfigsBuilder
 
 
@@ -44,7 +44,7 @@ def _launch_setup(context):
                 name == 'robot_description_file' and
                 LaunchConfiguration(name).perform(context) == 'auto'):
             context.launch_configurations[name] = str(path)
-    from advrf_ros2_motors_controller.robot_config import load_robot
+    from advrf_ros2_bringup.robot_config import load_robot
     robot = load_robot(
         config_dir,
         LaunchConfiguration('namespace').perform(context),
@@ -130,7 +130,7 @@ def _launch_setup(context):
     if not LaunchConfiguration('ecat_namespace').perform(context):
         context.launch_configurations['ecat_namespace'] = namespace.rstrip('/') + '/ecat'
     transport_namespace = resolve_ecat_namespace(
-        LaunchConfiguration("ecat_namespace").perform(context), "", namespace)
+        LaunchConfiguration("ecat_namespace").perform(context), namespace)
     feedback_topic = transport_namespace.rstrip('/') + '/rx/joint_states'
     feedback_remappings = [('joint_states', feedback_topic), ('/joint_states', feedback_topic)]
     # Some MoveIt components use absolute names. Keep those inside the same scope.
