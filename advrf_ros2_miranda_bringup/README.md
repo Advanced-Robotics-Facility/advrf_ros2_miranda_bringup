@@ -140,7 +140,7 @@ This package composes nodes from the shared stack; it defines no custom node exe
 | `gravity_compensation.launch.py` | Gravity compensation, optional bridge and RViz |
 
 - Feedback: `/advrf/miranda/ecat/rx/joint_states` (`sensor_msgs/msg/JointState`).
-- Motor commands: `/advrf/miranda/ecat/tx/motors` (`advrf_ros2_interfaces/msg/MotorTxPdoVector`).
+- Motor commands: `/advrf/miranda/ecat/tx/motors` (`advrf_ros2_interfaces/msg/MotorTxPdo`).
 - TX activation: `/advrf/miranda/ecat/set_active_tx` (`std_srvs/srv/SetBool`).
 - Gravity activation: `/advrf/miranda/set_gravity_compensation` (`std_srvs/srv/SetBool`) when gravity compensation is launched.
 - Controller and bridge details: see the `advrf_ros2_motors_controller` and `advrf_ros2_ecat` README files.
