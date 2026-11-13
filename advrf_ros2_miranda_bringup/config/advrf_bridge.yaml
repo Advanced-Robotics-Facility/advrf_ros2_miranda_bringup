@@ -8,6 +8,7 @@
       idle: motor/miranda_idle.yaml
 
     period_ms: 4
+    joint_states_frame_id: base_link
     active_tx_on_first_msg: false
     command_timeout_ms: 10
     qos:
