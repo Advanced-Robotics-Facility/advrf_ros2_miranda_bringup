@@ -1,4 +1,4 @@
-# README
+# Miranda - Quick Use
 
 ## Docker Installation 
 
