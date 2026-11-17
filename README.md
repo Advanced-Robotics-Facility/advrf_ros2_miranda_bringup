@@ -192,3 +192,33 @@ ec_gui
 
 - Replace `localhost` by robot ip or keep `localhost` if you are testing in dummy mode.
 - Click on scan device
+
+
+## Connect PC directly to the robot
+
+1. Connect your pc directly on the control-box/advatench
+2. Edit your config network, go to `edition network` > `IPv4` 
+    - select `Shared to other computers`
+3. Check your ip address, it would be like  `10.42.0.1`
+4. Scan the network to find the robot:
+```bash
+nmap -sn 10.42.0.1/24
+# return something like 10.42.0.1 and 10.42.0.225 
+```
+5. Connect to the robot by ssh
+```bash
+# adapt to nmap output
+ssh embedded@10.42.0.225
+```
+
+## Change watchdog timeout ms
+
+```bash 
+# edit config file on the advantech (robot), may be adapt the path, the idea is to edit the advrf_bridge from the advrf_ros2_miranda_bringup pkg
+vim /home/embedded/ws/ros2_ws/src/advrf_ros2_miranda_bringup/advrf_ros2_miranda_bringup/config/advrf_bridge.yaml
+# change the value 
+command_timeout_ms: 10
+# commpilation
+cd /home/embedded/ws/ros2_ws/
+colcon build
+```
