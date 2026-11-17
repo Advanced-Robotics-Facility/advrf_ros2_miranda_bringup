@@ -34,6 +34,7 @@ You can't see the topic on your pc once you launch next demos:
 - Good `ROS_DOMAIN_ID` ? same of the robot
 - `Repl` is started on the robot ?
 - `ros2 bridge` is started on the robot ? 
+- try to restart the ros2 daemon: `ros2 daemon stop && ros2 daemon start`
 
 warning: start the same `control_mode` both side there is no check between same, so be careful, because the `control_mode` is used ros2 side to know initial gains from config file.
 
