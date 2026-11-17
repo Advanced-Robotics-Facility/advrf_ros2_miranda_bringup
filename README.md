@@ -1,5 +1,10 @@
 # Miranda - Quick Use
 
+
+## Global Architecture
+
+![miranda_ros2_bridge-global_architecture.drawio](.doc/miranda_ros2_bridge-global_architecture.drawio.png)
+
 ## Docker Installation 
 
 ```bash
@@ -21,7 +26,6 @@ docker compose exec workspace bash​
 # … after work... stop the docker​
 docker compose down​
 ```
-
 
 ## Use Docker
 
