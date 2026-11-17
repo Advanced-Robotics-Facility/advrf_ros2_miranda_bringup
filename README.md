@@ -96,10 +96,9 @@ control_mode:={position|impedance}
 ## DEMO gravity compensation
 ## start ros2 bridge
 docker compose exec workspace bash​
-ros2 launch advrf_ros2_miranda_bringup moveit.launch.py start_bridge:=false control_mode:=position
+ros2 launch advrf_ros2_miranda_bringup gravity_compensation.launch.py start_bridge:=false use_rviz:=true 
 ```
 start_bridge:={false|true} 
-control_mode:={position|impedance}
 
 
 ### Use Docker with the robot
@@ -154,7 +153,6 @@ control_mode:={position|impedance}
 ## DEMO gravity compensation
 ## start ros2 bridge
 docker compose exec workspace bash​
-ros2 launch advrf_ros2_miranda_bringup moveit.launch.py start_bridge:=false control_mode:=position
+ros2 launch advrf_ros2_miranda_bringup gravity_compensation.launch.py start_bridge:=false use_rviz:=true 
 ```
 start_bridge:={false|true} 
-control_mode:={position|impedance}
