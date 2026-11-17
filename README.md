@@ -65,7 +65,7 @@ ros2 launch advrf_ros2_miranda_bringup bridge.launch.py active_tx_on_first_msg:=
 active_tx_on_first_msg:={true|false} 
 control_mode:={position|impedance}
 
-if you put `active_tx_on_first_msg:=false`, start the service 
+if you put `active_tx_on_first_msg:=false`, to start tx comminucation start the service:
 ```bash
 ros2 service call /advrf/miranda/ecat/set_active_tx std_srvs/srv/SetBool '{data: true}'
 ```
@@ -99,6 +99,11 @@ docker compose exec workspace bash​
 ros2 launch advrf_ros2_miranda_bringup gravity_compensation.launch.py start_bridge:=false use_rviz:=true 
 ```
 start_bridge:={false|true} 
+
+```bash
+## Put gains to 0
+ros2 service call /advrf/miranda/set_gravity_compensation std_srvs/srv/SetBool "{data: true}"
+```
 
 
 ### Use Docker with the robot
@@ -156,3 +161,9 @@ docker compose exec workspace bash​
 ros2 launch advrf_ros2_miranda_bringup gravity_compensation.launch.py start_bridge:=false use_rviz:=true 
 ```
 start_bridge:={false|true} 
+
+
+```bash
+## Put gains to 0
+ros2 service call /advrf/miranda/set_gravity_compensation std_srvs/srv/SetBool "{data: true}"
+```
