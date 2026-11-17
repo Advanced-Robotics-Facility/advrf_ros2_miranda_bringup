@@ -167,3 +167,28 @@ start_bridge:={false|true}
 ## Put gains to 0
 ros2 service call /advrf/miranda/set_gravity_compensation std_srvs/srv/SetBool "{data: true}"
 ```
+
+
+## Ethercat GUI
+
+```bash
+# start the docker​ if isn't started yet
+docker compose up –d ​
+```
+
+:warning: `repl` should to run (dummy: localhost or robot: robot_ip)
+:warning: DONT SCAN DEVICES when the robot is moving, to be sure scan device when only `repl` is started.
+
+1. Start `ec_gui`
+
+```bash
+# reach the docker
+docker compose exec workspace bash​
+# execute the gui in the docker
+ec_gui
+```
+
+2. Scan device
+
+- Replace `localhost` by robot ip or keep `localhost` if you are testing in dummy mode.
+- Click on scan device
