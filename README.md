@@ -222,3 +222,31 @@ command_timeout_ms: 10
 cd /home/embedded/ws/ros2_ws/
 colcon build
 ```
+
+
+## Gains
+
+### Gains Order
+
+```yaml
+impedance:
+    gain_0: 1000.0  # Stiffness
+    gain_1: 10.0    # Damping
+    gain_2: 1.0     # Kp
+    gain_3: 0.007   # Ki
+    gain_4: 0.6     # Kd
+position:
+    gain_0: 200.0   # Kp
+    gain_1: 0.0     # Ki
+    gain_2: 10.0    # Kd
+    gain_3: 0.0     ## NOT USED
+    gain_4: 0.0     ## NOT USED
+```
+
+### Gains Default
+
+Default gains are used only by `convert_tx_motor_node` node, when you use `control_mode:=position or impendance`, the node will load the good default gains by motor.
+
+It's possible to edit initial gains used by `convert_tx_motor_node` by editing the config [robot_config](advrf_ros2_miranda_bringup/config/robot_config.yaml)
+
+:Warning: don't forget to colcon build, to apply the modification.
