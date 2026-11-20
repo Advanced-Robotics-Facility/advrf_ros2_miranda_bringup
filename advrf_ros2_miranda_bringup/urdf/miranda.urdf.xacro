@@ -9,4 +9,10 @@
     <child link="base_link"/>
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
+
+  <gazebo>
+    <plugin filename="libjoint_feedback.so" name="gazebo::JointFeedback">
+      <joint_name>yaw_1</joint_name>
+    </plugin>
+  </gazebo>
 </robot>
