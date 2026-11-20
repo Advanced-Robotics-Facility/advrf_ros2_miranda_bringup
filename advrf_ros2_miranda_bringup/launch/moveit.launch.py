@@ -146,20 +146,6 @@ def _launch_setup(context):
     moveit_environment = {'LD_LIBRARY_PATH': ros_lib + os.pathsep + os.environ.get('LD_LIBRARY_PATH', '')}
     actions = [
         Node(
-            package="tf2_ros",
-            executable="static_transform_publisher",
-            namespace=moveit_namespace,
-            remappings=[("tf", "/tf"), ("tf_static", "/tf_static")],
-            name="miranda_world_to_base",
-            output="screen",
-            arguments=[
-                "--frame-id",
-                "world",
-                "--child-frame-id",
-                "base_link",
-            ],
-        ),
-        Node(
             package="robot_state_publisher",
             executable="robot_state_publisher",
             namespace=moveit_namespace,
