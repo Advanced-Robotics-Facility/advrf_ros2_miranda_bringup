@@ -11,7 +11,7 @@
   </joint>
 
   <gazebo>
-    <plugin filename="libjoint_feedback.so" name="gazebo::JointFeedback">
+    <plugin filename="libecat_system.so" name="advrf_ros2_gazebo::EcatSystem">
       <joint_name>yaw_1</joint_name>
     </plugin>
   </gazebo>
