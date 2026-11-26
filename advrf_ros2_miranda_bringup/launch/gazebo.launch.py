@@ -19,15 +19,26 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('use_gz_ros2_control', default_value='true'),
         DeclareLaunchArgument('gui', default_value='true'),
+        DeclareLaunchArgument('model_file', default_value=str(miranda / 'urdf/miranda.urdf.xacro')),
+        DeclareLaunchArgument('gazebo_ecat_namespace', default_value='/advrf/miranda/ecat'),
+        DeclareLaunchArgument('active_tx_on_first_msg', default_value='false'),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(str(gazebo / 'launch/gazebo.launch.py')),
             launch_arguments={
-                'model_file': str(miranda / 'urdf/miranda.urdf.xacro'),
+                'model_file': LaunchConfiguration('model_file'),
                 'robot_name': 'miranda',
                 'resource_paths': resources,
                 'use_gz_ros2_control': LaunchConfiguration('use_gz_ros2_control'),
                 'gui': LaunchConfiguration('gui'),
+                'gazebo_ecat_namespace': LaunchConfiguration('gazebo_ecat_namespace'),
+                'active_tx_on_first_msg': LaunchConfiguration('active_tx_on_first_msg'),
             }.items(),
+        ),
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            arguments=['/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock'],
+            output='screen',
         ),
         Node(
             package='controller_manager',

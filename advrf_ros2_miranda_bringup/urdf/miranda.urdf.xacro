@@ -3,6 +3,8 @@
   <!-- Import miranda urdf file -->
   <xacro:include filename="miranda.urdf" />
   <xacro:arg name="use_gz_ros2_control" default="false"/>
+  <xacro:arg name="gazebo_ecat_namespace" default="/advrf/miranda/ecat"/>
+  <xacro:arg name="active_tx_on_first_msg" default="false"/>
   <xacro:include filename="ros2_control.urdf.xacro"/>
 
   <link name="world"/>
@@ -20,40 +22,59 @@
   <xacro:unless value="$(arg use_gz_ros2_control)">
     <gazebo>
       <plugin filename="libadvrf_gazebo_ecat_system.so" name="advrf_ros2_gazebo::EcatSystem">
-        <ros_namespace>/advrf/miranda/ecat</ros_namespace>
+        <ros_namespace>$(arg gazebo_ecat_namespace)</ros_namespace>
+        <command_timeout_ms>100</command_timeout_ms>
+        <feedback_period_ms>4</feedback_period_ms>
+        <active_on_first_command>$(arg active_tx_on_first_msg)</active_on_first_command>
+        <hold_initial_pose>true</hold_initial_pose>
         <joint>
           <name>yaw_1</name>
           <id>11</id>
+          <stiffness>1000.0</stiffness>
+          <damping>10.0</damping>
+          <damping></damping>
           <effort_limit>460.0</effort_limit>
         </joint>
         <joint>
           <name>pitch_1</name>
           <id>12</id>
+          <stiffness>1000.0</stiffness>
+          <damping>10.0</damping>
           <effort_limit>460.0</effort_limit>
         </joint>
         <joint>
           <name>yaw_2</name>
           <id>13</id>
+          <stiffness>1000.0</stiffness>
+          <damping>10.0</damping>
           <effort_limit>314.0</effort_limit>
         </joint>
         <joint>
           <name>pitch_2</name>
           <id>14</id>
+          <stiffness>1000.0</stiffness>
+          <damping>10.0</damping>
           <effort_limit>460.0</effort_limit>
         </joint>
         <joint>
           <name>yaw_3</name>
           <id>15</id>
+          <stiffness>1000.0</stiffness>
+          <damping>10.0</damping>
           <effort_limit>314.0</effort_limit>
         </joint>
         <joint>
           <name>pitch_3</name>
           <id>16</id>
+          <stiffness>1000.0</stiffness>
+          <damping>10.0</damping>
           <effort_limit>314.0</effort_limit>
         </joint>
         <joint>
           <name>dagana_A_claw_joint</name>
           <id>302</id>
+          <stiffness>1000.0</stiffness>
+          <damping>10.0</damping>
           <effort_limit>1000.0</effort_limit>
         </joint>
       </plugin>

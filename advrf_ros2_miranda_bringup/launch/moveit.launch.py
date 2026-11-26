@@ -10,7 +10,7 @@ from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, Opaq
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import Node
+from launch_ros.actions import Node, SetParameter
 from advrf_ros2_motors_controller.ros_names import resolve_ecat_namespace
 from moveit_configs_utils import MoveItConfigsBuilder
 
@@ -28,9 +28,13 @@ def _required_file(context, argument: str) -> Path:
 
 def _launch_setup(context):
     from advrf_ros2_bringup.robot_config import load_robot
-    gazebo = LaunchConfiguration('backend').perform(context) == 'gazebo'
+    backend = LaunchConfiguration('backend').perform(context)
+    gazebo = backend == 'gazebo'
+    advrf_gazebo = backend == 'advrf_gazebo'
+    if advrf_gazebo and LaunchConfiguration('start_bridge').perform(context) != 'false':
+        raise ValueError('advrf_gazebo requires start_bridge:=false')
     root = Path(get_package_share_directory('advrf_ros2_miranda_bringup'))
-    time_parameters = {'use_sim_time': gazebo}
+    time_parameters = {'use_sim_time': gazebo or advrf_gazebo}
     robot = load_robot(
         LaunchConfiguration('robot_config').perform(context),
         LaunchConfiguration('namespace').perform(context),
@@ -160,7 +164,7 @@ def _launch_setup(context):
             executable="robot_state_publisher",
             namespace=moveit_namespace,
             output="screen",
-            parameters=[moveit_config.robot_description],
+            parameters=[moveit_config.robot_description, time_parameters],
             remappings=moveit_remappings,
             condition=IfCondition('false' if gazebo else 'true'),
         ),
@@ -194,23 +198,24 @@ def _launch_setup(context):
         ),
     ]
 
-    if gazebo:
-        return [
+    if gazebo or advrf_gazebo:
+        actions[:0] = [
+            SetParameter(name='use_sim_time', value=True),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(str(root / 'launch/gazebo.launch.py')),
                 launch_arguments={
                     'gui': LaunchConfiguration('gui'),
-                    'use_gz_ros2_control': 'true',
+                    'model_file': str(description_file),
+                    'use_gz_ros2_control': 'true' if gazebo else 'false',
+                    'gazebo_ecat_namespace': transport_namespace,
+                    'active_tx_on_first_msg': (
+                        LaunchConfiguration('active_tx_on_first_msg').perform(context) or 'false'
+                    ),
                 }.items(),
             ),
-            Node(
-                package='ros_gz_bridge',
-                executable='parameter_bridge',
-                arguments=['/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock'],
-                output='screen',
-            ),
-            *actions,
         ]
+    if gazebo:
+        return actions
 
     actions.append(Node(
         package='advrf_ros2_io', executable='selected_joint_marker_node',
@@ -238,7 +243,8 @@ def generate_launch_description():
     root = Path(get_package_share_directory('advrf_ros2_miranda_bringup'))
     return LaunchDescription(
         [
-            DeclareLaunchArgument('backend', default_value='advrf', choices=['advrf', 'gazebo']),
+            DeclareLaunchArgument('backend', default_value='advrf',
+                                  choices=['advrf', 'gazebo', 'advrf_gazebo']),
             DeclareLaunchArgument('gui', default_value='true', description='Show the Gazebo GUI'),
             DeclareLaunchArgument('use_rviz', default_value='true'),
             DeclareLaunchArgument('robot_config', default_value=str(root / 'config/robot_config.yaml')),
