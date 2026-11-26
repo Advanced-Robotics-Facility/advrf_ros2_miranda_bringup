@@ -13,6 +13,11 @@
   <exec_depend>ament_index_python</exec_depend>
   <exec_depend>advrf_ros2_bringup</exec_depend>
   <exec_depend>advrf_ros2_gazebo</exec_depend>
+  <exec_depend>gz_ros2_control</exec_depend>
+  <exec_depend>ros_gz_bridge</exec_depend>
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>joint_state_broadcaster</exec_depend>
+  <exec_depend>joint_trajectory_controller</exec_depend>
   <exec_depend>advrf_ros2_gravity_compensation</exec_depend>
   <exec_depend>advrf_ros2_motors_controller</exec_depend>
   <exec_depend>python3-yaml</exec_depend>

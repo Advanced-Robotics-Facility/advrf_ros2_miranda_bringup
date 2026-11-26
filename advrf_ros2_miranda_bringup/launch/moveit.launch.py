@@ -28,6 +28,9 @@ def _required_file(context, argument: str) -> Path:
 
 def _launch_setup(context):
     from advrf_ros2_bringup.robot_config import load_robot
+    gazebo = LaunchConfiguration('backend').perform(context) == 'gazebo'
+    root = Path(get_package_share_directory('advrf_ros2_miranda_bringup'))
+    time_parameters = {'use_sim_time': gazebo}
     robot = load_robot(
         LaunchConfiguration('robot_config').perform(context),
         LaunchConfiguration('namespace').perform(context),
@@ -74,10 +77,17 @@ def _launch_setup(context):
     moveit_namespace = '/' + moveit_namespace.strip('/') if moveit_namespace.strip('/') else namespace + '/moveit'
     joint_parameters = robot['limits']
     joints = joint_parameters.get("joints", [])
+    if gazebo:
+        simulation_controllers = yaml.safe_load(
+            (root / 'config/gz_ros2_controllers.yaml').read_text()
+        )
+        joints = simulation_controllers['joint_trajectory_controller']['ros__parameters']['joints']
     if not joints:
         raise RuntimeError("Central robot configuration has no controlled joints")
 
-    action_name = robot['action_name']
+    action_name = (
+        '/joint_trajectory_controller/follow_joint_trajectory' if gazebo else robot['action_name']
+    )
     if not isinstance(action_name, str) or "/" not in action_name.strip("/"):
         raise RuntimeError(
             "trajectory action_name must contain a controller and action namespace"
@@ -110,7 +120,7 @@ def _launch_setup(context):
         },
     }
     transport_namespace = resolve_ecat_namespace(namespace)
-    feedback_topic = transport_namespace.rstrip('/') + '/rx/joint_states'
+    feedback_topic = '/joint_states' if gazebo else transport_namespace.rstrip('/') + '/rx/joint_states'
     feedback_remappings = [('joint_states', feedback_topic), ('/joint_states', feedback_topic)]
     # Some MoveIt components use absolute names. Keep those inside the same scope.
     interfaces = (
@@ -152,6 +162,7 @@ def _launch_setup(context):
             output="screen",
             parameters=[moveit_config.robot_description],
             remappings=moveit_remappings,
+            condition=IfCondition('false' if gazebo else 'true'),
         ),
         Node(
             package="moveit_ros_move_group",
@@ -159,7 +170,7 @@ def _launch_setup(context):
             namespace=moveit_namespace,
             additional_env=moveit_environment,
             output="screen",
-            parameters=[moveit_config.to_dict()],
+            parameters=[moveit_config.to_dict(), time_parameters],
             remappings=moveit_remappings,
         ),
         Node(
@@ -176,10 +187,30 @@ def _launch_setup(context):
                 moveit_config.planning_pipelines,
                 moveit_config.robot_description_kinematics,
                 moveit_config.joint_limits,
+                time_parameters,
             ],
             remappings=moveit_remappings,
+            condition=IfCondition(LaunchConfiguration('use_rviz')),
         ),
     ]
+
+    if gazebo:
+        return [
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(str(root / 'launch/gazebo.launch.py')),
+                launch_arguments={
+                    'gui': LaunchConfiguration('gui'),
+                    'use_gz_ros2_control': 'true',
+                }.items(),
+            ),
+            Node(
+                package='ros_gz_bridge',
+                executable='parameter_bridge',
+                arguments=['/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock'],
+                output='screen',
+            ),
+            *actions,
+        ]
 
     actions.append(Node(
         package='advrf_ros2_io', executable='selected_joint_marker_node',
@@ -207,6 +238,9 @@ def generate_launch_description():
     root = Path(get_package_share_directory('advrf_ros2_miranda_bringup'))
     return LaunchDescription(
         [
+            DeclareLaunchArgument('backend', default_value='advrf', choices=['advrf', 'gazebo']),
+            DeclareLaunchArgument('gui', default_value='true', description='Show the Gazebo GUI'),
+            DeclareLaunchArgument('use_rviz', default_value='true'),
             DeclareLaunchArgument('robot_config', default_value=str(root / 'config/robot_config.yaml')),
             DeclareLaunchArgument('controllers_config', default_value=str(root / 'config/advrf_controllers.yaml')),
             DeclareLaunchArgument('bridge_config', default_value=str(Path(

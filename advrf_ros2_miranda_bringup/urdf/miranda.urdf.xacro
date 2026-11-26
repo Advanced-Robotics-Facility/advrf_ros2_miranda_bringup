@@ -2,6 +2,8 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="miranda">
   <!-- Import miranda urdf file -->
   <xacro:include filename="miranda.urdf" />
+  <xacro:arg name="use_gz_ros2_control" default="false"/>
+  <xacro:include filename="ros2_control.urdf.xacro"/>
 
   <link name="world"/>
   <joint name="world_to_base" type="fixed">
@@ -10,44 +12,51 @@
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
 
-  <gazebo>
-    <plugin filename="libecat_system.so" name="advrf_ros2_gazebo::EcatSystem">
-      <ros_namespace>/advrf/miranda/ecat</ros_namespace>
-      <joint>
-        <name>yaw_1</name>
-        <id>11</id>
-        <effort_limit>460.0</effort_limit>
-      </joint>
-      <joint>
-        <name>pitch_1</name>
-        <id>12</id>
-        <effort_limit>460.0</effort_limit>
-      </joint>
-      <joint>
-        <name>yaw_2</name>
-        <id>13</id>
-        <effort_limit>314.0</effort_limit>
-      </joint>
-      <joint>
-        <name>pitch_2</name>
-        <id>14</id>
-        <effort_limit>460.0</effort_limit>
-      </joint>
-      <joint>
-        <name>yaw_3</name>
-        <id>15</id>
-        <effort_limit>314.0</effort_limit>
-      </joint>
-      <joint>
-        <name>pitch_3</name>
-        <id>16</id>
-        <effort_limit>314.0</effort_limit>
-      </joint>
-      <joint>
-        <name>dagana_A_claw_joint</name>
-        <id>302</id>
-        <effort_limit>1000.0</effort_limit>
-      </joint>
-    </plugin>
-  </gazebo>
+
+  <xacro:if value="$(arg use_gz_ros2_control)">
+    <xacro:miranda_gz_ros2_control/>
+  </xacro:if>
+
+  <xacro:unless value="$(arg use_gz_ros2_control)">
+    <gazebo>
+      <plugin filename="libadvrf_gazebo_ecat_system.so" name="advrf_ros2_gazebo::EcatSystem">
+        <ros_namespace>/advrf/miranda/ecat</ros_namespace>
+        <joint>
+          <name>yaw_1</name>
+          <id>11</id>
+          <effort_limit>460.0</effort_limit>
+        </joint>
+        <joint>
+          <name>pitch_1</name>
+          <id>12</id>
+          <effort_limit>460.0</effort_limit>
+        </joint>
+        <joint>
+          <name>yaw_2</name>
+          <id>13</id>
+          <effort_limit>314.0</effort_limit>
+        </joint>
+        <joint>
+          <name>pitch_2</name>
+          <id>14</id>
+          <effort_limit>460.0</effort_limit>
+        </joint>
+        <joint>
+          <name>yaw_3</name>
+          <id>15</id>
+          <effort_limit>314.0</effort_limit>
+        </joint>
+        <joint>
+          <name>pitch_3</name>
+          <id>16</id>
+          <effort_limit>314.0</effort_limit>
+        </joint>
+        <joint>
+          <name>dagana_A_claw_joint</name>
+          <id>302</id>
+          <effort_limit>1000.0</effort_limit>
+        </joint>
+      </plugin>
+    </gazebo>
+  </xacro:unless>
 </robot>
