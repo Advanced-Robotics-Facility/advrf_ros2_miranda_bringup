@@ -5,6 +5,20 @@ ros version: jazzy
 
 ROS and workspace built and sourced. Run commands from the workspace root.
 
+### Gazebo simulation
+
+Choose the operator panel or MoveIt launch with `backend:=advrf_gazebo`.
+
+```bash
+ros2 launch advrf_ros2_miranda_bringup miranda.launch.py \
+  backend:=advrf_gazebo start_bridge:=false active_tx_on_first_msg:=true
+
+ros2 launch advrf_ros2_miranda_bringup moveit.launch.py \
+  backend:=advrf_gazebo start_bridge:=false active_tx_on_first_msg:=true
+```
+
+Run one of these launches at a time. For a separate command publisher such as gravity compensation, start the simulator with `ros2 launch advrf_ros2_miranda_bringup gazebo.launch.py active_tx_on_first_msg:=true`. The EtherCAT-backed robot and dummy configurations below use the default `backend:=advrf`.
+
 ### 1. Dummy — everything on one PC
 
 Local configuration in `configs/ecat-miranda-config/`:

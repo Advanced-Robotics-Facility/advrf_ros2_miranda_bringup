@@ -22,6 +22,8 @@ def generate_launch_description():
         DeclareLaunchArgument('robot_description_file', default_value=str(Path(share) / 'urdf/miranda.urdf.xacro')),
         DeclareLaunchArgument('gravity_config', default_value=str(Path(share) / 'config/gravity_compensation.yaml')),
         DeclareLaunchArgument('gain_ramp_duration', default_value='3.0'),
+        DeclareLaunchArgument('gravity_damping', default_value='0.0'),
+        DeclareLaunchArgument('hold_position', default_value='false', choices=['true', 'false']),
         DeclareLaunchArgument('start_bridge', default_value='false', choices=['true', 'false']),
         DeclareLaunchArgument('active_tx_on_first_msg', default_value='false', choices=['true', 'false']),
         DeclareLaunchArgument('use_rviz', default_value='false', choices=['true', 'false']),
@@ -57,6 +59,8 @@ def generate_launch_description():
             'robot_description_file': LaunchConfiguration('robot_description_file'),
             'gravity_config': LaunchConfiguration('gravity_config'),
             'gain_ramp_duration': LaunchConfiguration('gain_ramp_duration'),
+            'gravity_damping': LaunchConfiguration('gravity_damping'),
+            'hold_position': LaunchConfiguration('hold_position'),
         }.items(),
     )
     return LaunchDescription(arguments + [bridge, view, gravity])

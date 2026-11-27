@@ -19,7 +19,8 @@ def setup(context):
             ('robot_config', 'controller_config', 'controllers_config', 'joint_control_config', 'bridge_config', 'control_mode', 'use_joy',
              'robot_description_file', 'start_bridge', 'active_tx_on_first_msg')}
     args.update(namespace=value('namespace'), use_panel=value('use_panel'),
-                use_rviz=value('use_rviz'), rviz_config=value('rviz_config'))
+                use_rviz=value('use_rviz'), rviz_config=value('rviz_config'),
+                gazebo_ecat='true' if value('backend') == 'advrf_gazebo' else 'false')
     robot = IncludeLaunchDescription(PythonLaunchDescriptionSource(str(
         Path(get_package_share_directory(package)) / 'launch' / filename)),
         launch_arguments=args.items())
@@ -29,7 +30,6 @@ def setup(context):
         simulation = IncludeLaunchDescription(
             PythonLaunchDescriptionSource(str(ROOT / 'launch/gazebo.launch.py')),
             launch_arguments={
-                'use_gz_ros2_control': 'false',
                 'gui': value('gui'),
                 'model_file': args['robot_description_file'],
                 'gazebo_ecat_namespace': args['namespace'].rstrip('/') + '/ecat',

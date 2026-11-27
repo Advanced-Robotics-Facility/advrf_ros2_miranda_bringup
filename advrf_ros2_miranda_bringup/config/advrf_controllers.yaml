@@ -2,6 +2,8 @@
 /**/joint_command_controller_node:
   ros__parameters:
     command_durability: volatile
+    gazebo_stiffness: 1000.0
+    gazebo_damping: 10.0
 /**/motor_power_node:
   ros__parameters:
     auto_start_motors: false
